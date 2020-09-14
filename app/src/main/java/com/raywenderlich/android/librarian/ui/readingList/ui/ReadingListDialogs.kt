@@ -2,6 +2,7 @@ package com.raywenderlich.android.librarian.ui.readingList.ui
 
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
@@ -28,11 +29,13 @@ fun AddReadingList(
   val inputState = remember { mutableStateOf("") }
 
   Dialog(onDismissRequest = onDismiss) {
+    val shape = RoundedCornerShape(16.dp)
+
     Column(
       modifier = Modifier.background(
         MaterialTheme.colors.surface,
-        shape = RoundedCornerShape(16.dp)
-      ),
+        shape = shape
+      ).border(width = 1.dp, color = MaterialTheme.colors.primary, shape = shape),
       verticalArrangement = Arrangement.Center,
       horizontalGravity = Alignment.CenterHorizontally
     ) {

@@ -16,7 +16,7 @@
     <string name="reading_list_number_of_books">- %d book(s)</string>
     <string name="no_books_text">There are no books here! Add some! :]</string>
     <string name="rating_text">Rating:</string>
-    <string name="number_of_reading_entries">Number of reading entries: %d</string>
+    <string name="number_of_reading_entries">Reading entries: %d</string>
     <string name="review_title">Review: %s</string>
     <string name="add_reading_list_button_text">Add reading list</string>
     <string name="reading_list_name_hint">Reading list name</string>

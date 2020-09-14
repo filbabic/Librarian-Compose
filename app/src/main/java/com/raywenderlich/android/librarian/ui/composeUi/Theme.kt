@@ -2,7 +2,6 @@ package com.raywenderlich.android.librarian.ui.composeUi
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Typography
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
@@ -25,7 +24,7 @@ private val DarkColors = darkColors(
   surface = Color(0xFF292A2E), // DONE
   background = Color(0xFF3E3F42),
   onPrimary = Color.White,
-  onSecondary =  Color.White // DONE
+  onSecondary = Color.White // DONE
 )
 
 @Composable
@@ -34,8 +33,7 @@ fun LibrarianTheme(
   content: @Composable () -> Unit
 ) {
   MaterialTheme(
-    colors = if (isDarkTheme) DarkColors else LightColors,
-    typography = Typography() // TODO h1-h7
+    colors = if (isDarkTheme) DarkColors else LightColors
   ) {
     content()
   }
