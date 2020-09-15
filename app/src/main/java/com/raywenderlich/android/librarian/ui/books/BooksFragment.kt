@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
+import androidx.ui.tooling.preview.Preview
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.Book
 import com.raywenderlich.android.librarian.model.Genre
@@ -108,6 +109,7 @@ class BooksFragment : Fragment() {
   }
 
   @Composable
+  @Preview
   fun AddNewBook() {
     FloatingActionButton(
       icon = { Icon(Icons.Filled.Add) },
