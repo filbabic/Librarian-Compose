@@ -37,91 +37,50 @@ package com.raywenderlich.android.librarian.ui.addBook
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.setContent
-import androidx.compose.ui.res.stringResource
-import com.raywenderlich.android.librarian.R
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.lifecycleScope
+import com.raywenderlich.android.librarian.model.Book
 import com.raywenderlich.android.librarian.model.state.AddBookState
-import com.raywenderlich.android.librarian.ui.composeUi.*
+import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class AddBookActivity : AppCompatActivity(), AddBookView {
+
+  private val _addBookState = MutableLiveData(AddBookState())
+
+  @Inject
+  lateinit var repository: LibrarianRepository
 
   companion object {
     fun getIntent(context: Context): Intent = Intent(context, AddBookActivity::class.java)
   }
 
-  private val addBookViewModel by viewModels<AddBookViewModel>()
-
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    addBookViewModel.setView(this)
-    addBookViewModel.loadGenres()
-    setContent { AddBookContent() }
   }
 
-  @Composable
-  fun AddBookContent() {
-    LibrarianTheme {
-      Scaffold(topBar = { AddBookTopBar() }) {
-        AddBookFormContent()
-      }
-    }
-  }
+  fun onAddBookTapped() {
+    val bookState = _addBookState.value ?: return
 
-  @Composable
-  fun AddBookTopBar() {
-    TopBar(
-      title = stringResource(id = R.string.add_book_title),
-      onBackPressed = { onBackPressed() }
-    )
-  }
-
-  @Composable
-  fun AddBookFormContent() {
-    val genres by addBookViewModel.genresState.observeAsState(emptyList())
-    val addBookState by addBookViewModel.addBookState.observeAsState(AddBookState())
-
-    Column(
-      modifier = Modifier.fillMaxSize(),
-      horizontalGravity = Alignment.CenterHorizontally
+    if (bookState.name.isNotEmpty() &&
+      bookState.description.isNotEmpty() &&
+      bookState.genreId.isNotEmpty()
     ) {
-      InputField(
-        value = addBookState.name,
-        isInputValid = addBookState.name.isNotEmpty(),
-        label = stringResource(id = R.string.book_title_hint),
-        onStateChanged = { name -> addBookViewModel.onNameChanged(name) })
+      lifecycleScope.launch {
+        repository.addBook(
+          Book(
+            name = bookState.name,
+            description = bookState.description,
+            genreId = bookState.genreId
+          )
+        )
 
-      InputField(
-        value = addBookState.description,
-        isInputValid = addBookState.description.isNotEmpty(),
-        label = stringResource(id = R.string.book_description_hint),
-        onStateChanged = { description -> addBookViewModel.onDescriptionChanged(description) })
-
-      SpinnerPicker(
-        pickerText = stringResource(id = R.string.genre_select),
-        items = genres,
-        itemToName = { it.name },
-        onItemPicked = { addBookViewModel.genrePicked(it) })
-
-      ActionButton(
-        modifier = Modifier.fillMaxWidth(),
-        text = stringResource(id = R.string.add_book_button_text),
-        isEnabled = addBookState.description.isNotEmpty() && addBookState.name.isNotEmpty() && addBookState.genreId.isNotEmpty(),
-        onClick = { addBookViewModel.onAddBookTapped() })
+        onBookAdded()
+      }
     }
   }
 

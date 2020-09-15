@@ -38,32 +38,21 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.Icon
-import androidx.compose.foundation.layout.ColumnScope.gravity
-import androidx.compose.foundation.layout.RowScope.gravity
-import androidx.compose.foundation.layout.Stack
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import com.raywenderlich.android.librarian.R
-import com.raywenderlich.android.librarian.ui.books.ui.BookFilter
-import com.raywenderlich.android.librarian.ui.books.ui.BooksList
-import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
-import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
-import com.raywenderlich.android.librarian.ui.composeUi.TopBar
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.lifecycleScope
+import com.raywenderlich.android.librarian.model.Book
+import com.raywenderlich.android.librarian.model.Genre
+import com.raywenderlich.android.librarian.model.relations.BookAndGenre
+import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import com.raywenderlich.android.librarian.ui.books.filter.ByGenre
+import com.raywenderlich.android.librarian.ui.books.filter.ByRating
+import com.raywenderlich.android.librarian.ui.books.filter.Filter
 import com.raywenderlich.android.librarian.utils.toast
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
 private const val REQUEST_CODE_ADD_BOOK = 201
@@ -71,116 +60,60 @@ private const val REQUEST_CODE_ADD_BOOK = 201
 @AndroidEntryPoint
 class BooksFragment : Fragment() {
 
-  private val booksViewModel by viewModels<BooksViewModel>()
+  @Inject
+  lateinit var repository: LibrarianRepository
+
+  private val _booksState = MutableLiveData(emptyList<BookAndGenre>())
+  private val _genresState = MutableLiveData<List<Genre>>()
+  var filter: Filter? = null
 
   override fun onCreateView(
     inflater: LayoutInflater, container: ViewGroup?,
     savedInstanceState: Bundle?
   ): View? {
     return ComposeView(requireContext()).apply {
-      setContent {
-        LibrarianTheme {
-          BooksContent()
-        }
-      }
+
     }
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    booksViewModel.loadGenres()
-    booksViewModel.loadBooks()
+    loadGenres()
+    loadBooks()
   }
 
-  @Composable
-  fun BooksContent() {
-    val bookBottomDrawerState = rememberBottomDrawerState(initialValue = BottomDrawerValue.Closed)
+  fun loadGenres() {
+    lifecycleScope.launch {
+      val genres = repository.getGenres()
 
-    Scaffold(topBar = { BooksTopBar(bookBottomDrawerState) },
-      floatingActionButton = { AddNewBook(bookBottomDrawerState) }) {
-      BookFilterModalDrawer(bookBottomDrawerState)
+      _genresState.value = genres
     }
   }
 
-  @Composable
-  fun BooksTopBar(bookFilterDrawerState: BottomDrawerState) {
-    TopBar(
-      title = stringResource(id = R.string.my_books_title),
-      actions = { FilterButton(bookFilterDrawerState) })
-  }
+  fun loadBooks() {
+    lifecycleScope.launch {
 
-  @Composable
-  fun FilterButton(bookFilterDrawerState: BottomDrawerState) {
-    IconButton(onClick = {
-      if (!bookFilterDrawerState.isClosed) {
-        bookFilterDrawerState.close()
-      } else {
-        bookFilterDrawerState.expand()
+      val books = when (val currentFilter = filter) {
+        is ByGenre -> repository.getBooksByGenre(currentFilter.genreId)
+        is ByRating -> repository.getBooksByRating(currentFilter.rating)
+        else -> repository.getBooks()
       }
-    }) {
-      Icon(Icons.Default.Edit, tint = MaterialTheme.colors.onSecondary)
+
+      _booksState.value = books
     }
   }
 
-  @Composable
-  fun BookFilterModalDrawer(bookFilterDrawerState: BottomDrawerState) {
-    val books by booksViewModel.booksState.observeAsState(emptyList())
-    val deleteDialogBook by booksViewModel.deleteBookState.observeAsState()
-
-    val bookToDelete = deleteDialogBook
-
-    BottomDrawerLayout(drawerState = bookFilterDrawerState,
-      drawerContent = { BookFilterModalDrawerContent(bookFilterDrawerState) },
-      bodyContent = {
-        Stack(
-          modifier = Modifier
-            .gravity(Alignment.CenterHorizontally)
-            .gravity(Alignment.CenterVertically)
-            .fillMaxSize()
-        ) {
-          BooksList(
-            books,
-            onLongItemClick = { bookAndGenre -> booksViewModel.showDeleteBook(bookAndGenre) }
-          )
-
-          if (bookToDelete != null) {
-            DeleteDialog(
-              message = stringResource(id = R.string.delete_message, bookToDelete.book.name),
-              item = bookToDelete,
-              onDeleteItem = { bookAndGenre -> booksViewModel.removeBook(bookAndGenre.book) },
-              onDismiss = { booksViewModel.cancelDeleteBook() }
-            )
-          }
-        }
-      })
-  }
-
-  @Composable
-  fun BookFilterModalDrawerContent(bookFilterDrawerState: BottomDrawerState) {
-    val genres by booksViewModel.genresState.observeAsState(emptyList())
-    val filter = booksViewModel.filter
-
-    BookFilter(filter, genres, onFilterSelected = { newFilter ->
-      bookFilterDrawerState.close()
-      booksViewModel.filter = newFilter
-      booksViewModel.loadBooks()
-    })
-  }
-
-  @Composable
-  fun AddNewBook(bookFilterDrawerState: BottomDrawerState) {
-    FloatingActionButton(
-      icon = { Icon(Icons.Filled.Add) },
-      onClick = {
-        bookFilterDrawerState.close { showAddBook() }
-      },
-    )
+  fun removeBook(book: Book) {
+    lifecycleScope.launch {
+      repository.removeBook(book)
+      loadBooks()
+    }
   }
 
   private fun showAddBook() {
     val addBook = registerForActivityResult(AddBookContract()) { isBookCreated ->
       if (isBookCreated) {
-        booksViewModel.loadBooks()
+        loadBooks()
         activity?.toast("Book added!")
       }
     }

@@ -38,38 +38,28 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.Icon
-import androidx.compose.foundation.layout.ColumnScope.gravity
-import androidx.compose.foundation.layout.RowScope.gravity
-import androidx.compose.foundation.layout.Stack
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Scaffold
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import com.raywenderlich.android.librarian.R
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.lifecycleScope
+import com.raywenderlich.android.librarian.model.ReadingList
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
-import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
-import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
-import com.raywenderlich.android.librarian.ui.composeUi.TopBar
-import com.raywenderlich.android.librarian.ui.readingList.ui.AddReadingList
-import com.raywenderlich.android.librarian.ui.readingList.ui.ReadingLists
+import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.readingListDetails.ReadingListDetailsActivity
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ReadingListFragment : Fragment() {
 
-  private val readingListViewModel by viewModels<ReadingListViewModel>()
+  @Inject
+  lateinit var repository: LibrarianRepository
+
+  val readingListsState: LiveData<List<ReadingListsWithBooks>> by lazy {
+    repository.getReadingListsFlow().asLiveData()
+  }
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -77,71 +67,26 @@ class ReadingListFragment : Fragment() {
     savedInstanceState: Bundle?
   ): View? {
     return ComposeView(requireContext()).apply {
-      setContent {
-        LibrarianTheme {
-          ReadingListContent()
-        }
-      }
+
     }
   }
 
-  @Composable
-  fun ReadingListContent() {
-    Scaffold(
-      topBar = { ReadingListTopBar() },
-      floatingActionButton = { AddReadingListButton() }) {
-      ReadingListContentWrapper()
-    }
-  }
-
-  @Composable
-  fun ReadingListContentWrapper() {
-    val readingListsState by readingListViewModel.readingListsState.observeAsState(emptyList())
-    val deleteListState by readingListViewModel.deleteReadingListState
-      .observeAsState()
-
-    val deleteList = deleteListState
-
-    val isShowingAddList by readingListViewModel.isShowingAddReadingListState.observeAsState(false)
-
-    Stack(
-      modifier = Modifier.fillMaxSize()
-        .gravity(Alignment.CenterVertically)
-        .gravity(Alignment.CenterHorizontally)
-    ) {
-      ReadingLists(
-        readingLists = readingListsState,
-        onItemClick = { readingList -> onItemSelected(readingList) },
-        onLongItemClick = { list -> readingListViewModel.onDeleteReadingList(list) }
-      )
-
-      if (isShowingAddList) {
-        AddReadingList(
-          onDismiss = { readingListViewModel.onDialogDismiss() },
-          onAddList = { name -> readingListViewModel.addReadingList(name) })
-      }
-
-      if (deleteList != null) {
-        DeleteDialog(
-          item = deleteList,
-          message = stringResource(id = R.string.delete_message, deleteList.name),
-          onDeleteItem = { readingList -> readingListViewModel.deleteReadingList(readingList) },
-          onDismiss = { readingListViewModel.onDialogDismiss() }
+  fun deleteReadingList(readingListsWithBooks: ReadingListsWithBooks) {
+    lifecycleScope.launch {
+      repository.removeReadingList(
+        ReadingList(
+          readingListsWithBooks.id,
+          readingListsWithBooks.name,
+          readingListsWithBooks.books.map { it.book.id }
         )
-      }
+      )
     }
   }
 
-  @Composable
-  fun AddReadingListButton() {
-    FloatingActionButton(onClick = { readingListViewModel.onAddReadingListTapped() }) {
-      Icon(asset = Icons.Default.Add)
+  fun addReadingList(readingListName: String) {
+    lifecycleScope.launch {
+      repository.addReadingList(ReadingList(name = readingListName, bookIds = emptyList()))
     }
-  }
-
-  @Composable
-  fun ReadingListTopBar() {
-    TopBar(title = stringResource(id = R.string.reading_lists_title))
   }
 
   private fun onItemSelected(readingList: ReadingListsWithBooks) {

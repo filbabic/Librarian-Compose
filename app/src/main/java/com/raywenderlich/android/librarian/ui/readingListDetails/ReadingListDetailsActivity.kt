@@ -37,37 +37,27 @@ package com.raywenderlich.android.librarian.ui.readingListDetails
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.Icon
-import androidx.compose.foundation.layout.ColumnScope.gravity
-import androidx.compose.foundation.layout.RowScope.gravity
-import androidx.compose.foundation.layout.Stack
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.setContent
-import androidx.compose.ui.res.stringResource
-import com.raywenderlich.android.librarian.R
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.lifecycleScope
 import com.raywenderlich.android.librarian.model.BookItem
+import com.raywenderlich.android.librarian.model.ReadingList
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
-import com.raywenderlich.android.librarian.ui.bookPicker.BookPicker
-import com.raywenderlich.android.librarian.ui.books.ui.BooksList
-import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
-import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
-import com.raywenderlich.android.librarian.ui.composeUi.TopBar
+import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ReadingListDetailsActivity : AppCompatActivity() {
 
-  private val readingListViewModel by viewModels<ReadingListDetailsViewModel>()
+  @Inject
+  lateinit var repository: LibrarianRepository
+
+  private val _addBookState = MutableLiveData<List<BookItem>>()
+  private var readingListState: LiveData<ReadingListsWithBooks> = MutableLiveData()
 
   companion object {
     private const val KEY_READING_LIST = "reading_list"
@@ -85,104 +75,69 @@ class ReadingListDetailsActivity : AppCompatActivity() {
     val readingList = intent.getParcelableExtra<ReadingListsWithBooks>(KEY_READING_LIST)
 
     if (readingList != null) {
-      readingListViewModel.setReadingList(readingList)
+      setReadingList(readingList)
     } else {
       finish()
       return
     }
+  }
 
-    setContent {
-      LibrarianTheme {
-        ReadingListDetailsContent()
-      }
+  fun setReadingList(readingListsWithBooks: ReadingListsWithBooks) {
+    readingListState = repository.getReadingListById(readingListsWithBooks.id)
+      .asLiveData(lifecycleScope.coroutineContext)
+
+    refreshBooks()
+  }
+
+  fun refreshBooks() {
+    lifecycleScope.launch {
+      val books = repository.getBooks()
+      val readingListBooks = readingListState.value?.books?.map { it.book.id } ?: emptyList()
+
+      val freshBooks = books.filter { it.book.id !in readingListBooks }
+
+      _addBookState.value = freshBooks.map { BookItem(it.book.id, it.book.name, false) }
     }
   }
 
-  @Composable
-  fun ReadingListDetailsContent() {
-    val readingListState by readingListViewModel.readingListState.observeAsState()
-    val bottomDrawerState = rememberBottomDrawerState(initialValue = BottomDrawerValue.Closed)
+  fun addBookToReadingList(bookId: String?) {
+    val data = readingListState.value
 
-    Scaffold(
-      topBar = { ReadingListDetailsTopBar(readingListState) },
-      floatingActionButton = { AddBookToReadingList(bottomDrawerState) }
-    ) {
-      ReadingListDetailsModalDrawer(bottomDrawerState, readingListState)
+    if (data != null && bookId != null) {
+      val bookIds = (data.books.map { it.book.id } + bookId).distinct()
+
+      val newReadingList = ReadingList(
+        data.id,
+        data.name,
+        bookIds
+      )
+
+      updateReadingList(newReadingList)
     }
   }
 
-  @Composable
-  fun AddBookToReadingList(bottomDrawerState: BottomDrawerState) {
-    FloatingActionButton(onClick = {
+  fun removeBookFromReadingList(bookId: String) {
+    val data = readingListState.value
 
-      if (bottomDrawerState.isClosed) {
-        readingListViewModel.refreshBooks()
-        bottomDrawerState.expand()
-      }
-    }) {
-      Icon(asset = Icons.Default.Add)
+    if (data != null) {
+      val bookIds = data.books.map { it.book.id } - bookId
+
+      val newReadingList = ReadingList(
+        data.id,
+        data.name,
+        bookIds
+      )
+
+      updateReadingList(newReadingList)
     }
   }
 
-  @Composable
-  fun ReadingListDetailsTopBar(readingList: ReadingListsWithBooks?) {
-    val title = readingList?.name ?: stringResource(id = R.string.reading_list)
+  private fun updateReadingList(newReadingList: ReadingList) {
+    lifecycleScope.launch {
+      repository.updateReadingList(newReadingList)
 
-    TopBar(title = title, onBackPressed = { onBackPressed() })
-  }
-
-  @Composable
-  fun ReadingListDetailsModalDrawer(
-    drawerState: BottomDrawerState,
-    readingList: ReadingListsWithBooks?
-  ) {
-    val deleteBookState by readingListViewModel.deleteBookState.observeAsState()
-    val addBookState by readingListViewModel.addBookState.observeAsState(emptyList())
-
-    val bookToDelete = deleteBookState
-
-    BottomDrawerLayout(
-      drawerState = drawerState,
-      gesturesEnabled = false,
-      drawerContent = { ReadingListDetailsModalDrawerContent(drawerState, addBookState) }) {
-      Stack(
-        modifier = Modifier
-          .gravity(Alignment.CenterHorizontally)
-          .gravity(Alignment.CenterVertically)
-          .fillMaxSize()
-      ) {
-        BooksList(
-          readingList?.books ?: emptyList(),
-          onLongItemClick = { book -> readingListViewModel.onItemLongTapped(book) }
-        )
-
-        if (bookToDelete != null) {
-          DeleteDialog(
-            item = bookToDelete,
-            message = stringResource(id = R.string.delete_message, bookToDelete.book.name),
-            onDeleteItem = { readingListViewModel.removeBookFromReadingList(it.book.id) },
-            onDismiss = { readingListViewModel.onDialogDismiss() }
-          )
-        }
-      }
+      refreshBooks()
     }
   }
 
-  @Composable
-  fun ReadingListDetailsModalDrawerContent(
-    drawerState: BottomDrawerState,
-    addBookState: List<BookItem>
-  ) {
-
-    BookPicker(
-      books = addBookState,
-      onBookSelected = { readingListViewModel.bookPickerItemSelected(it) },
-      onBookPicked = {
-        readingListViewModel.addBookToReadingList(
-          addBookState.firstOrNull { it.isSelected }?.bookId
-        )
-
-        drawerState.close()
-      }, onDismiss = { drawerState.close() })
-  }
 }
