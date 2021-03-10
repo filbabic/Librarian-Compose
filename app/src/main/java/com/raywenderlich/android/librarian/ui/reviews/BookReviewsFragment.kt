@@ -69,10 +69,20 @@ class BookReviewsFragment : Fragment() {
     )
   }
 
+  private val addReviewContract by lazy {
+    registerForActivityResult(AddBookReviewContract()) { isReviewAdded ->
+      if (isReviewAdded) {
+        activity?.toast("Review added!")
+      }
+    }
+  }
+
   override fun onCreateView(
     inflater: LayoutInflater, container: ViewGroup?,
     savedInstanceState: Bundle?
   ): View {
+    addReviewContract
+
     return ComposeView(requireContext()).apply {
 
     }
@@ -85,14 +95,7 @@ class BookReviewsFragment : Fragment() {
   }
 
   private fun startAddBookReview() {
-    val addReview =
-      registerForActivityResult(AddBookReviewContract()) { isReviewAdded ->
-        if (isReviewAdded) {
-          activity?.toast("Review added!")
-        }
-      }
-
-    addReview.launch(REQUEST_CODE_ADD_REVIEW)
+    addReviewContract.launch(REQUEST_CODE_ADD_REVIEW)
   }
 
   private fun onItemSelected(item: BookReview) {
