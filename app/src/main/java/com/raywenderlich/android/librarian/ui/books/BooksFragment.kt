@@ -38,10 +38,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
+import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.Book
 import com.raywenderlich.android.librarian.model.Genre
 import com.raywenderlich.android.librarian.model.relations.BookAndGenre
@@ -72,6 +81,9 @@ class BooksFragment : Fragment() {
     savedInstanceState: Bundle?
   ): View {
     return ComposeView(requireContext()).apply {
+      setContent { // new code
+        BooksContent()
+      }
     }
   }
 
@@ -79,6 +91,33 @@ class BooksFragment : Fragment() {
     super.onViewCreated(view, savedInstanceState)
     loadGenres()
     loadBooks()
+  }
+
+  @Composable
+  fun BooksContent() {
+    Scaffold(topBar = { BooksTopBar() },
+      floatingActionButton = { AddNewBook() }) {
+    }
+  }
+
+  @Composable
+  fun BooksTopBar() {
+    TopAppBar(
+      title = { Text(stringResource(id = R.string.my_books_title)) },
+      backgroundColor = colorResource(id = R.color.colorPrimary),
+      contentColor = Color.White
+    )
+  }
+
+  @Composable
+  @Preview
+  fun AddNewBook() {
+    FloatingActionButton(
+      content = { Icon(Icons.Filled.Add, contentDescription = "Add Book") },
+      onClick = {
+        showAddBook()
+      },
+    )
   }
 
   fun loadGenres() {
