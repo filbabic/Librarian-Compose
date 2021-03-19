@@ -60,6 +60,15 @@ private const val REQUEST_CODE_ADD_BOOK = 201
 @AndroidEntryPoint
 class BooksFragment : Fragment() {
 
+  private val addBookContract by lazy {
+    registerForActivityResult(AddBookContract()) { isBookCreated ->
+      if (isBookCreated) {
+        loadBooks()
+        activity?.toast("Book added!")
+      }
+    }
+  }
+
   @Inject
   lateinit var repository: LibrarianRepository
 
@@ -71,6 +80,7 @@ class BooksFragment : Fragment() {
     inflater: LayoutInflater, container: ViewGroup?,
     savedInstanceState: Bundle?
   ): View {
+    addBookContract
     return ComposeView(requireContext()).apply {
     }
   }
@@ -110,13 +120,6 @@ class BooksFragment : Fragment() {
   }
 
   private fun showAddBook() {
-    val addBook = registerForActivityResult(AddBookContract()) { isBookCreated ->
-      if (isBookCreated) {
-        loadBooks()
-        activity?.toast("Book added!")
-      }
-    }
-
-    addBook.launch(REQUEST_CODE_ADD_BOOK)
+    addBookContract.launch(REQUEST_CODE_ADD_BOOK)
   }
 }
