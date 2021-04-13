@@ -40,11 +40,11 @@ import com.raywenderlich.android.librarian.model.Book
 import com.raywenderlich.android.librarian.model.Genre
 
 class BooksByGenre(
-    @Embedded
-    val genre: Genre,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "bookGenreId"
-    )
-    val books: List<Book>?
+  @Embedded
+  val genre: Genre,
+  @Relation(
+    parentColumn = "id",
+    entityColumn = "bookGenreId"
+  )
+  val books: List<Book>?
 )
