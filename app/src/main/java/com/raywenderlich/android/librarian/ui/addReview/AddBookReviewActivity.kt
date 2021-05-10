@@ -42,6 +42,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -61,10 +62,7 @@ import com.raywenderlich.android.librarian.model.relations.BookAndGenre
 import com.raywenderlich.android.librarian.model.state.AddBookReviewState
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.addReview.ui.BookPicker
-import com.raywenderlich.android.librarian.ui.composeUi.ActionButton
-import com.raywenderlich.android.librarian.ui.composeUi.InputField
-import com.raywenderlich.android.librarian.ui.composeUi.RatingBar
-import com.raywenderlich.android.librarian.ui.composeUi.TopBar
+import com.raywenderlich.android.librarian.ui.composeUi.*
 import com.raywenderlich.android.librarian.utils.EMPTY_BOOK_AND_GENRE
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -86,7 +84,11 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    setContent { AddBookReviewContent() }
+    setContent {
+      LibrarianTheme {
+        AddBookReviewContent()
+      }
+    }
     loadBooks()
   }
 
@@ -128,7 +130,8 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
       Text(
         text = stringResource(id = R.string.book_picker_hint),
         fontSize = 18.sp,
-        fontWeight = FontWeight.Bold
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colors.onPrimary
       )
 
       Spacer(modifier = Modifier.height(8.dp))

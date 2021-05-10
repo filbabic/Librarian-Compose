@@ -74,7 +74,8 @@ fun AddReadingList(
       Text(
         text = stringResource(id = R.string.add_reading_list_title),
         fontSize = 18.sp,
-        fontWeight = FontWeight.Bold
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colors.onPrimary
       )
 
       InputField(label = stringResource(id = R.string.reading_list_name_hint),

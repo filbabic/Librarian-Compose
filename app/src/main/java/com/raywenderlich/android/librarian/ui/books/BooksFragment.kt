@@ -67,6 +67,7 @@ import com.raywenderlich.android.librarian.ui.books.filter.Filter
 import com.raywenderlich.android.librarian.ui.books.ui.BookFilter
 import com.raywenderlich.android.librarian.ui.books.ui.BooksList
 import com.raywenderlich.android.librarian.ui.composeUi.DeleteBookDialog
+import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.utils.toast
 import dagger.hilt.android.AndroidEntryPoint
@@ -105,7 +106,9 @@ class BooksFragment : Fragment() {
     addBookContract
     return ComposeView(requireContext()).apply {
       setContent {
-        BooksContent()
+        LibrarianTheme {
+          BooksContent()
+        }
       }
     }
   }

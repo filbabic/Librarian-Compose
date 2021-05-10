@@ -59,6 +59,7 @@ import com.raywenderlich.android.librarian.model.relations.BookReview
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.BookReviewDetailsActivity
 import com.raywenderlich.android.librarian.ui.composeUi.DeleteReviewDialog
+import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.ui.reviews.ui.BookReviewsList
 import com.raywenderlich.android.librarian.utils.toast
@@ -98,7 +99,9 @@ class BookReviewsFragment : Fragment() {
 
     return ComposeView(requireContext()).apply {
       setContent {
-        BookReviewsContent()
+        LibrarianTheme {
+          BookReviewsContent()
+        }
       }
     }
   }

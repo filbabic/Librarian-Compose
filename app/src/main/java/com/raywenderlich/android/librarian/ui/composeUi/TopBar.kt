@@ -35,13 +35,11 @@
 package com.raywenderlich.android.librarian.ui.composeUi
 
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
-import com.raywenderlich.android.librarian.R
 
 @Composable
 fun TopBar(
@@ -61,6 +59,6 @@ fun TopBar(
     title = { Text(text = title) },
     navigationIcon = backButtonAction,
     actions = actions,
-    backgroundColor = colorResource(id = R.color.colorPrimary),
-    contentColor = Color.White)
+    backgroundColor = MaterialTheme.colors.primary,
+    contentColor = MaterialTheme.colors.onSecondary)
 }

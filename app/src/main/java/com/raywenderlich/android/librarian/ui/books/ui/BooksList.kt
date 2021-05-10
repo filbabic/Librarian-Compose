@@ -109,7 +109,8 @@ fun BookListItem(
         Text(
           fontSize = 16.sp,
           text = bookAndGenre.genre.name,
-          fontStyle = FontStyle.Italic
+          fontStyle = FontStyle.Italic,
+          color = MaterialTheme.colors.onPrimary
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -121,7 +122,8 @@ fun BookListItem(
           fontStyle = FontStyle.Italic,
           modifier = Modifier
             .fillMaxHeight()
-            .padding(end = 16.dp)
+            .padding(end = 16.dp),
+          color = MaterialTheme.colors.onPrimary
         )
         Spacer(modifier = Modifier.height(16.dp))
       }

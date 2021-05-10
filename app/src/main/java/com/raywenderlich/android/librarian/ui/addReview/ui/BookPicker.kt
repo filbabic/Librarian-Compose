@@ -35,10 +35,7 @@
 package com.raywenderlich.android.librarian.ui.addReview.ui
 
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,11 +66,11 @@ fun BookPicker(
           onItemPicked(book)
           isPickerOpen.value = false
         }) {
-          Text(text = book.book.name)
+          Text(text = book.book.name, color = MaterialTheme.colors.onPrimary)
         }
       }
     }
 
-    Text(text = selectedBookName)
+    Text(text = selectedBookName, color = MaterialTheme.colors.onPrimary)
   }
 }

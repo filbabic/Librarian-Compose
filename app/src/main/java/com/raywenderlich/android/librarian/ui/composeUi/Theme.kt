@@ -34,8 +34,11 @@
 
 package com.raywenderlich.android.librarian.ui.composeUi
 
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val LightColors = lightColors(
@@ -57,3 +60,15 @@ private val DarkColors = darkColors(
   onPrimary = Color.White,
   onSecondary = Color.White
 )
+
+@Composable
+fun LibrarianTheme(
+  isDarkTheme: Boolean = isSystemInDarkTheme(),
+  content: @Composable () -> Unit
+) {
+  MaterialTheme(
+    colors = if (isDarkTheme) DarkColors else LightColors
+  ) {
+    content()
+  }
+}

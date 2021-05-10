@@ -57,6 +57,7 @@ import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.ReadingList
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.ui.readingList.ui.AddReadingList
 import com.raywenderlich.android.librarian.ui.readingList.ui.ReadingLists
@@ -81,7 +82,9 @@ class ReadingListFragment : Fragment() {
   ): View {
     return ComposeView(requireContext()).apply {
       setContent {
-        ReadingListContent()
+        LibrarianTheme {
+          ReadingListContent()
+        }
       }
     }
   }

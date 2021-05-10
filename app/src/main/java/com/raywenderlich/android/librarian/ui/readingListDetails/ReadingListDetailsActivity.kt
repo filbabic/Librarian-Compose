@@ -55,6 +55,7 @@ import com.raywenderlich.android.librarian.model.BookItem
 import com.raywenderlich.android.librarian.model.ReadingList
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -91,7 +92,11 @@ class ReadingListDetailsActivity : AppCompatActivity() {
       return
     }
 
-    setContent { ReadingListDetailsContent() }
+    setContent {
+      LibrarianTheme {
+        ReadingListDetailsContent()
+      }
+    }
   }
 
   @Composable

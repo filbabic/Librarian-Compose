@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Razeware LLC
+ * Copyright (c) 2021 Razeware LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,6 +50,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -67,6 +68,7 @@ import com.raywenderlich.android.librarian.model.ReadingEntry
 import com.raywenderlich.android.librarian.model.Review
 import com.raywenderlich.android.librarian.model.relations.BookReview
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
 import com.raywenderlich.android.librarian.ui.composeUi.RatingBar
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.utils.EMPTY_BOOK_REVIEW
@@ -107,7 +109,11 @@ class BookReviewDetailsActivity : AppCompatActivity() {
     }
 
     setReview(data)
-    setContent { BookReviewDetailsContent() }
+    setContent {
+      LibrarianTheme {
+        BookReviewDetailsContent()
+      }
+    }
   }
 
   @Composable
@@ -121,8 +127,7 @@ class BookReviewDetailsActivity : AppCompatActivity() {
   @Composable
   fun BookReviewDetailsTopBar() {
     val reviewState = _bookReviewDetailsState.value
-    val bookName =
-      reviewState.book.name
+    val bookName = reviewState.book.name
 
     TopBar(title = bookName, onBackPressed = { onBackPressed() })
   }
@@ -139,10 +144,13 @@ class BookReviewDetailsActivity : AppCompatActivity() {
     val bookReview = _bookReviewDetailsState.value
     val genre = _genreState.value
 
-    Column(modifier = Modifier
-      .fillMaxSize()
-      .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
-      horizontalAlignment = CenterHorizontally) {
+    Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
+      horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+
       Spacer(modifier = Modifier.height(16.dp))
 
       Card(modifier = Modifier.size(200.dp, 300.dp),
@@ -160,11 +168,15 @@ class BookReviewDetailsActivity : AppCompatActivity() {
       Text(
         text = bookReview.book.name,
         fontWeight = FontWeight.Bold,
-        fontSize = 18.sp)
+        fontSize = 18.sp,
+        color = MaterialTheme.colors.onPrimary
+      )
 
       Spacer(modifier = Modifier.height(6.dp))
 
-      Text(text = genre.name, fontSize = 12.sp)
+      Text(text = genre.name, fontSize = 12.sp,
+        color = MaterialTheme.colors.onPrimary
+      )
 
       Spacer(modifier = Modifier.height(6.dp))
 
@@ -183,7 +195,8 @@ class BookReviewDetailsActivity : AppCompatActivity() {
         text =
         stringResource(id =
         R.string.last_updated_date, formatDateToText(bookReview.review.lastUpdatedDate)),
-        fontSize = 12.sp
+        fontSize = 12.sp,
+        color = MaterialTheme.colors.onPrimary
       )
 
       Spacer(modifier = Modifier.height(8.dp))
@@ -197,7 +210,8 @@ class BookReviewDetailsActivity : AppCompatActivity() {
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 8.dp),
         text = bookReview.review.notes,
         fontSize = 12.sp,
-        fontStyle = FontStyle.Italic
+        fontStyle = FontStyle.Italic,
+        color = MaterialTheme.colors.onPrimary
       )
 
       Spacer(modifier = Modifier
@@ -227,7 +241,7 @@ class BookReviewDetailsActivity : AppCompatActivity() {
   }
 
   fun removeReadingEntry(readingEntry: ReadingEntry) {
-    val data = _bookReviewDetailsState.value?.review ?: return
+    val data = _bookReviewDetailsState.value.review
 
     val updatedReview = data.copy(
       entries = data.entries - readingEntry,

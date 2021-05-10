@@ -37,18 +37,17 @@ package com.raywenderlich.android.librarian.ui.composeUi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.raywenderlich.android.librarian.R
 
 @Composable
 fun InputField(
@@ -60,8 +59,8 @@ fun InputField(
   imeAction: ImeAction = ImeAction.Next,
   onStateChanged: (String) -> Unit
 ) {
-  val focusedColor = colorResource(id = R.color.colorPrimary)
-  val unfocusedColor = colorResource(id = R.color.colorPrimaryDark)
+  val focusedColor = MaterialTheme.colors.primary
+  val unfocusedColor = MaterialTheme.colors.primaryVariant
 
   OutlinedTextField(
     value = value,

@@ -54,10 +54,7 @@ import com.raywenderlich.android.librarian.model.Book
 import com.raywenderlich.android.librarian.model.Genre
 import com.raywenderlich.android.librarian.model.state.AddBookState
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
-import com.raywenderlich.android.librarian.ui.composeUi.ActionButton
-import com.raywenderlich.android.librarian.ui.composeUi.GenrePicker
-import com.raywenderlich.android.librarian.ui.composeUi.InputField
-import com.raywenderlich.android.librarian.ui.composeUi.TopBar
+import com.raywenderlich.android.librarian.ui.composeUi.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -77,7 +74,11 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    setContent { AddBookContent() }
+    setContent {
+      LibrarianTheme {
+        AddBookContent()
+      }
+    }
 
     loadGenres()
   }
