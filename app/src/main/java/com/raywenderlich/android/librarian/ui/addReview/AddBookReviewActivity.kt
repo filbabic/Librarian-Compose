@@ -152,7 +152,8 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
       ActionButton(
         modifier = Modifier.fillMaxWidth(0.7f),
         text = stringResource(id = R.string.add_book_review_text),
-        onClick = ::addBookReview
+        onClick = ::addBookReview,
+        isEnabled = true
       )
 
       Spacer(modifier = Modifier.height(16.dp))
