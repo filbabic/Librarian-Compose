@@ -38,14 +38,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Scaffold
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
@@ -60,6 +60,7 @@ import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.books.filter.ByGenre
 import com.raywenderlich.android.librarian.ui.books.filter.ByRating
 import com.raywenderlich.android.librarian.ui.books.filter.Filter
+import com.raywenderlich.android.librarian.ui.books.ui.BookFilter
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.utils.toast
 import dagger.hilt.android.AndroidEntryPoint
@@ -88,6 +89,7 @@ class BooksFragment : Fragment() {
   private val _genresState = MutableLiveData<List<Genre>>()
   var filter: Filter? = null
 
+  @ExperimentalMaterialApi
   override fun onCreateView(
     inflater: LayoutInflater, container: ViewGroup?,
     savedInstanceState: Bundle?
@@ -106,32 +108,85 @@ class BooksFragment : Fragment() {
     loadBooks()
   }
 
+  @ExperimentalMaterialApi
   @Composable
   fun BooksContent() {
-    Scaffold(topBar = { BooksTopBar() },
-      floatingActionButton = { AddNewBook() }) {
+    val bookFilterDrawerState = rememberBottomDrawerState(initialValue = BottomDrawerValue.Closed)
 
+    Scaffold(topBar = { BooksTopBar(bookFilterDrawerState) },
+      floatingActionButton = { AddNewBook(bookFilterDrawerState) }) {
+      BookFilterModalDrawer(bookFilterDrawerState)
     }
   }
 
+  @ExperimentalMaterialApi
   @Composable
-  fun BooksTopBar() {
+  fun BooksTopBar(bookFilterDrawerState: BottomDrawerState) {
     TopBar(title = stringResource(id = R.string.my_books_title),
-      actions = { FilterButton() })
+      actions = { FilterButton(bookFilterDrawerState) })
   }
 
+  @ExperimentalMaterialApi
   @Composable
-  fun FilterButton() {
-    IconButton(onClick = { /*TODO*/ }) {
+  fun FilterButton(bookFilterDrawerState: BottomDrawerState) {
+    val scope = rememberCoroutineScope()
+
+    IconButton(onClick = {
+      scope.launch {
+        if (!bookFilterDrawerState.isClosed) {
+          bookFilterDrawerState.close()
+        } else {
+          bookFilterDrawerState.expand()
+        }
+      }
+    }) {
       Icon(imageVector = Icons.Default.Edit, tint = Color.White, contentDescription = "Filter")
     }
   }
 
+  @ExperimentalMaterialApi
   @Composable
-  fun AddNewBook() {
+  fun AddNewBook(bookFilterDrawerState: BottomDrawerState) {
+    val coroutineScope = rememberCoroutineScope()
+
     FloatingActionButton(content = {
       Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Book")
-    }, onClick = { showAddBook() })
+    }, onClick = {
+      coroutineScope.launch {
+        bookFilterDrawerState.close()
+        showAddBook()
+      }
+    })
+  }
+
+  @ExperimentalMaterialApi
+  @Composable
+  fun BookFilterModalDrawer(bookFilterDrawerState: BottomDrawerState) {
+    val books = _booksState.value ?: emptyList()
+
+    BottomDrawer(
+      drawerState = bookFilterDrawerState,
+      gesturesEnabled = false,
+      drawerContent = {
+        BookFilterModalDrawerContent(Modifier.align(CenterHorizontally), bookFilterDrawerState)
+      }) {
+      BooksList(books)
+    }
+  }
+
+  @ExperimentalMaterialApi
+  @Composable
+  fun BookFilterModalDrawerContent(modifier: Modifier, bookFilterDrawerState: BottomDrawerState) {
+    val scope = rememberCoroutineScope()
+    val genres = _genresState.value ?: emptyList()
+
+    BookFilter(modifier, filter, genres, onFilterSelected = { newFilter ->
+      scope.launch {
+        bookFilterDrawerState.close()
+        filter = newFilter
+        loadBooks()
+      }
+    })
   }
 
   fun loadGenres() {

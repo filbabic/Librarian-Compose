@@ -40,16 +40,14 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.*
+import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.Book
@@ -57,6 +55,7 @@ import com.raywenderlich.android.librarian.model.Genre
 import com.raywenderlich.android.librarian.model.state.AddBookState
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.composeUi.ActionButton
+import com.raywenderlich.android.librarian.ui.composeUi.GenrePicker
 import com.raywenderlich.android.librarian.ui.composeUi.InputField
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import dagger.hilt.android.AndroidEntryPoint
@@ -66,8 +65,8 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class AddBookActivity : AppCompatActivity(), AddBookView {
 
-  private val _addBookState = MutableLiveData(AddBookState())
-  private val _genresState = MutableLiveData(emptyList<Genre>())
+  private val _addBookState = mutableStateOf(AddBookState())
+  private val _genresState = mutableStateOf(emptyList<Genre>())
 
   @Inject
   lateinit var repository: LibrarianRepository
@@ -106,11 +105,8 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
   @Composable
   fun AddBookFormContent() {
     val genres = _genresState.value ?: emptyList()
-    val isGenresPickerOpen = remember { mutableStateOf(false) }
     val bookNameState = remember { mutableStateOf("") }
     val bookDescriptionState = remember { mutableStateOf("") }
-    val selectedGenreName = genres.firstOrNull { it.id == _addBookState.value?.genreId }?.name
-      ?: "None"
 
     Column(
       modifier = Modifier.fillMaxSize(),
@@ -118,36 +114,22 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
       InputField(value = bookNameState.value,
         onStateChanged = { newValue ->
           bookNameState.value = newValue
-          _addBookState.value = _addBookState.value?.copy(name = newValue)
+          _addBookState.value = _addBookState.value.copy(name = newValue)
         },
         label = stringResource(id = R.string.book_title_hint))
 
       InputField(value = bookDescriptionState.value,
         onStateChanged = { newValue ->
           bookDescriptionState.value = newValue
-          _addBookState.value = _addBookState.value?.copy(description = newValue)
+          _addBookState.value = _addBookState.value.copy(description = newValue)
         },
         label = stringResource(id = R.string.book_description_hint))
 
-      Row(verticalAlignment = Alignment.CenterVertically) {
-
-        TextButton(onClick = { isGenresPickerOpen.value = true },
-          content = { Text(text = stringResource(id = R.string.genre_select)) })
-
-        DropdownMenu(expanded = isGenresPickerOpen.value,
-          onDismissRequest = { isGenresPickerOpen.value = false }) {
-          for (genre in genres) {
-            DropdownMenuItem(onClick = {
-              _addBookState.value = _addBookState.value?.copy(genreId = genre.id)
-              isGenresPickerOpen.value = false
-            }) {
-              Text(text = genre.name)
-            }
-          }
-        }
-
-        Text(text = selectedGenreName)
-      }
+      GenrePicker(
+        genres = genres, selectedGenreId = _addBookState.value.genreId,
+        onItemPicked = {
+          _addBookState.value = _addBookState.value.copy(genreId = it.id)
+        })
 
       ActionButton(
         text = stringResource(id = R.string.add_book_button_text),
