@@ -46,6 +46,8 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,6 +57,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.Book
+import com.raywenderlich.android.librarian.model.Genre
 import com.raywenderlich.android.librarian.model.state.AddBookState
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import dagger.hilt.android.AndroidEntryPoint
@@ -65,6 +68,7 @@ import javax.inject.Inject
 class AddBookActivity : AppCompatActivity(), AddBookView {
 
   private val _addBookState = MutableLiveData(AddBookState())
+  private val _genresState = MutableLiveData(emptyList<Genre>())
 
   @Inject
   lateinit var repository: LibrarianRepository
@@ -76,6 +80,14 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent { AddBookContent() }
+
+    loadGenres()
+  }
+
+  private fun loadGenres() {
+    lifecycleScope.launch {
+      _genresState.value = repository.getGenres()
+    }
   }
 
   @Composable
@@ -100,27 +112,48 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
 
   @Composable
   fun AddBookFormContent() {
+    val genres = _genresState.value ?: emptyList()
+    val isGenresPickerOpen = remember { mutableStateOf(false) }
+    val bookNameState = remember { mutableStateOf("") }
+    val bookDescriptionState = remember { mutableStateOf("") }
+    val selectedGenreName = genres.firstOrNull { it.id == _addBookState.value?.genreId }?.name
+      ?: "None"
+
     Column(
       modifier = Modifier.fillMaxSize(),
       horizontalAlignment = Alignment.CenterHorizontally) {
-      OutlinedTextField(value = "",
-        onValueChange = {},
+      OutlinedTextField(value = bookNameState.value,
+        onValueChange = { newValue ->
+          bookNameState.value = newValue
+          _addBookState.value = _addBookState.value?.copy(name = newValue)
+        },
         label = { Text(text = stringResource(id = R.string.book_title_hint)) })
 
-      OutlinedTextField(value = "",
-        onValueChange = {},
+      OutlinedTextField(value = bookDescriptionState.value,
+        onValueChange = { newValue ->
+          bookDescriptionState.value = newValue
+          _addBookState.value = _addBookState.value?.copy(description = newValue)
+        },
         label = { Text(text = stringResource(id = R.string.book_description_hint)) })
 
-      Row {
+      Row(verticalAlignment = Alignment.CenterVertically) {
 
-        TextButton(onClick = { },
+        TextButton(onClick = { isGenresPickerOpen.value = true },
           content = { Text(text = stringResource(id = R.string.genre_select)) })
 
-        DropdownMenu(expanded = false, onDismissRequest = { }) {
-          DropdownMenuItem(onClick = {}) {
-
+        DropdownMenu(expanded = isGenresPickerOpen.value,
+          onDismissRequest = { isGenresPickerOpen.value = false }) {
+          for (genre in genres) {
+            DropdownMenuItem(onClick = {
+              _addBookState.value = _addBookState.value?.copy(genreId = genre.id)
+              isGenresPickerOpen.value = false
+            }) {
+              Text(text = genre.name)
+            }
           }
         }
+
+        Text(text = selectedGenreName)
       }
 
       TextButton(onClick = { onAddBookTapped() }) {
