@@ -43,15 +43,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
@@ -60,6 +56,9 @@ import com.raywenderlich.android.librarian.model.Book
 import com.raywenderlich.android.librarian.model.Genre
 import com.raywenderlich.android.librarian.model.state.AddBookState
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import com.raywenderlich.android.librarian.ui.composeUi.ActionButton
+import com.raywenderlich.android.librarian.ui.composeUi.InputField
+import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -99,15 +98,9 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
 
   @Composable
   fun AddBookTopBar() {
-    TopAppBar(title = {
-      Text(text = stringResource(id = R.string.add_book_title))
-    },
-      navigationIcon = {
-        IconButton(onClick = { onBackPressed() }) {
-          Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
-        }
-      }, contentColor = Color.White,
-      backgroundColor = colorResource(id = R.color.colorPrimary))
+    TopBar(
+      title = stringResource(id = R.string.add_book_title),
+      onBackPressed = { onBackPressed() })
   }
 
   @Composable
@@ -122,19 +115,19 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
     Column(
       modifier = Modifier.fillMaxSize(),
       horizontalAlignment = Alignment.CenterHorizontally) {
-      OutlinedTextField(value = bookNameState.value,
-        onValueChange = { newValue ->
+      InputField(value = bookNameState.value,
+        onStateChanged = { newValue ->
           bookNameState.value = newValue
           _addBookState.value = _addBookState.value?.copy(name = newValue)
         },
-        label = { Text(text = stringResource(id = R.string.book_title_hint)) })
+        label = stringResource(id = R.string.book_title_hint))
 
-      OutlinedTextField(value = bookDescriptionState.value,
-        onValueChange = { newValue ->
+      InputField(value = bookDescriptionState.value,
+        onStateChanged = { newValue ->
           bookDescriptionState.value = newValue
           _addBookState.value = _addBookState.value?.copy(description = newValue)
         },
-        label = { Text(text = stringResource(id = R.string.book_description_hint)) })
+        label = stringResource(id = R.string.book_description_hint))
 
       Row(verticalAlignment = Alignment.CenterVertically) {
 
@@ -156,9 +149,10 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
         Text(text = selectedGenreName)
       }
 
-      TextButton(onClick = { onAddBookTapped() }) {
-        Text(text = stringResource(id = R.string.add_book_button_text))
-      }
+      ActionButton(
+        text = stringResource(id = R.string.add_book_button_text),
+        onClick = { onAddBookTapped() },
+        isEnabled = true)
     }
   }
 
