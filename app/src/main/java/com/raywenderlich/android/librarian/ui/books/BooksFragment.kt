@@ -43,6 +43,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -50,7 +51,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.Book
@@ -61,6 +61,7 @@ import com.raywenderlich.android.librarian.ui.books.filter.ByGenre
 import com.raywenderlich.android.librarian.ui.books.filter.ByRating
 import com.raywenderlich.android.librarian.ui.books.filter.Filter
 import com.raywenderlich.android.librarian.ui.books.ui.BookFilter
+import com.raywenderlich.android.librarian.ui.books.ui.BooksList
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.utils.toast
 import dagger.hilt.android.AndroidEntryPoint
@@ -85,8 +86,8 @@ class BooksFragment : Fragment() {
   @Inject
   lateinit var repository: LibrarianRepository
 
-  private val _booksState = MutableLiveData(emptyList<BookAndGenre>())
-  private val _genresState = MutableLiveData<List<Genre>>()
+  private val _booksState = mutableStateOf(emptyList<BookAndGenre>())
+  private val _genresState = mutableStateOf<List<Genre>>(emptyList())
   var filter: Filter? = null
 
   @ExperimentalMaterialApi

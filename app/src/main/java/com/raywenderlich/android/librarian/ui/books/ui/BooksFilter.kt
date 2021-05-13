@@ -34,17 +34,13 @@
 
 package com.raywenderlich.android.librarian.ui.books.ui
 
-import android.widget.RatingBar
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -56,6 +52,7 @@ import com.raywenderlich.android.librarian.ui.books.filter.ByRating
 import com.raywenderlich.android.librarian.ui.books.filter.Filter
 import com.raywenderlich.android.librarian.ui.composeUi.ActionButton
 import com.raywenderlich.android.librarian.ui.composeUi.GenrePicker
+import com.raywenderlich.android.librarian.ui.composeUi.RatingBar
 
 @Composable
 fun BookFilter(
@@ -75,8 +72,8 @@ fun BookFilter(
   val currentGenreFilter = remember { mutableStateOf<Genre?>(null) }
   val currentRatingFilter = remember { mutableStateOf(0) }
 
-  Column(modifier = modifier,
-    horizontalAlignment = Alignment.CenterHorizontally) {
+  Column(modifier = modifier.fillMaxSize(),
+    horizontalAlignment = CenterHorizontally) {
 
     Column {
       Row {
@@ -121,6 +118,7 @@ fun BookFilter(
 
     if (currentFilter.value == 2) {
       RatingBar(
+        modifier = Modifier.align(CenterHorizontally),
         range = 1..5,
         currentRating = currentRatingFilter.value,
         isLargeRating = true,
