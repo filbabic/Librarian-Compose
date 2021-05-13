@@ -37,9 +37,23 @@ package com.raywenderlich.android.librarian.ui.addBook
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
+import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.Book
 import com.raywenderlich.android.librarian.model.state.AddBookState
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
@@ -61,6 +75,58 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    setContent { AddBookContent() }
+  }
+
+  @Composable
+  fun AddBookContent() {
+    Scaffold(topBar = { AddBookTopBar() }) {
+      AddBookFormContent()
+    }
+  }
+
+  @Composable
+  fun AddBookTopBar() {
+    TopAppBar(title = {
+      Text(text = stringResource(id = R.string.add_book_title))
+    },
+      navigationIcon = {
+        IconButton(onClick = { onBackPressed() }) {
+          Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+        }
+      }, contentColor = Color.White,
+      backgroundColor = colorResource(id = R.color.colorPrimary))
+  }
+
+  @Composable
+  fun AddBookFormContent() {
+    Column(
+      modifier = Modifier.fillMaxSize(),
+      horizontalAlignment = Alignment.CenterHorizontally) {
+      OutlinedTextField(value = "",
+        onValueChange = {},
+        label = { Text(text = stringResource(id = R.string.book_title_hint)) })
+
+      OutlinedTextField(value = "",
+        onValueChange = {},
+        label = { Text(text = stringResource(id = R.string.book_description_hint)) })
+
+      Row {
+
+        TextButton(onClick = { },
+          content = { Text(text = stringResource(id = R.string.genre_select)) })
+
+        DropdownMenu(expanded = false, onDismissRequest = { }) {
+          DropdownMenuItem(onClick = {}) {
+
+          }
+        }
+      }
+
+      TextButton(onClick = { onAddBookTapped() }) {
+        Text(text = stringResource(id = R.string.add_book_button_text))
+      }
+    }
   }
 
   fun onAddBookTapped() {
