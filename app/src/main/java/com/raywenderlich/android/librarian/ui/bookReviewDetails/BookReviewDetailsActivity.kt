@@ -39,23 +39,41 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Icon
-import androidx.compose.material.Scaffold
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.raywenderlich.android.librarian.R
-import com.raywenderlich.android.librarian.model.Genre
 import com.raywenderlich.android.librarian.model.ReadingEntry
 import com.raywenderlich.android.librarian.model.Review
 import com.raywenderlich.android.librarian.model.relations.BookReview
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import com.raywenderlich.android.librarian.ui.composeUi.RatingBar
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
+import com.raywenderlich.android.librarian.utils.EMPTY_BOOK_REVIEW
+import com.raywenderlich.android.librarian.utils.EMPTY_GENRE
+import com.raywenderlich.android.librarian.utils.formatDateToText
 import dagger.hilt.android.AndroidEntryPoint
+import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -65,8 +83,8 @@ class BookReviewDetailsActivity : AppCompatActivity() {
 
   @Inject
   lateinit var repository: LibrarianRepository
-  private val _bookReviewDetailsState = MutableLiveData<BookReview>()
-  private val _genreState = MutableLiveData<Genre>()
+  private val _bookReviewDetailsState = mutableStateOf(EMPTY_BOOK_REVIEW)
+  private val _genreState = mutableStateOf(EMPTY_GENRE)
 
   companion object {
     private const val KEY_BOOK_REVIEW = "book_review"
@@ -104,7 +122,7 @@ class BookReviewDetailsActivity : AppCompatActivity() {
   fun BookReviewDetailsTopBar() {
     val reviewState = _bookReviewDetailsState.value
     val bookName =
-      reviewState?.book?.name ?: stringResource(id = R.string.book_review_details_title)
+      reviewState.book.name
 
     TopBar(title = bookName, onBackPressed = { onBackPressed() })
   }
@@ -118,7 +136,75 @@ class BookReviewDetailsActivity : AppCompatActivity() {
 
   @Composable
   fun BookReviewDetailsInformation() {
+    val bookReview = _bookReviewDetailsState.value
+    val genre = _genreState.value
 
+    Column(modifier = Modifier
+      .fillMaxSize()
+      .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
+      horizontalAlignment = CenterHorizontally) {
+      Spacer(modifier = Modifier.height(16.dp))
+
+      Card(modifier = Modifier.size(200.dp, 300.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = 16.dp) {
+
+        CoilImage(
+          data = bookReview.review.imageUrl,
+          contentScale = ContentScale.FillWidth,
+          contentDescription = null)
+      }
+
+      Spacer(modifier = Modifier.height(16.dp))
+
+      Text(
+        text = bookReview.book.name,
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp)
+
+      Spacer(modifier = Modifier.height(6.dp))
+
+      Text(text = genre.name, fontSize = 12.sp)
+
+      Spacer(modifier = Modifier.height(6.dp))
+
+      RatingBar(
+        modifier = Modifier.align(CenterHorizontally),
+        range = 1..5,
+        isSelectable = false,
+        isLargeRating = false,
+        currentRating = bookReview.review.rating,
+        onRatingChanged = {}
+      )
+
+      Spacer(modifier = Modifier.height(6.dp))
+
+      Text(
+        text =
+        stringResource(id =
+        R.string.last_updated_date, formatDateToText(bookReview.review.lastUpdatedDate)),
+        fontSize = 12.sp
+      )
+
+      Spacer(modifier = Modifier.height(8.dp))
+
+      Spacer(modifier = Modifier
+        .fillMaxWidth(0.9f)
+        .height(1.dp)
+        .background(brush = SolidColor(Color.LightGray), shape = RectangleShape))
+
+      Text(
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 8.dp),
+        text = bookReview.review.notes,
+        fontSize = 12.sp,
+        fontStyle = FontStyle.Italic
+      )
+
+      Spacer(modifier = Modifier
+        .fillMaxWidth(0.9f)
+        .height(1.dp)
+        .background(brush = SolidColor(Color.LightGray), shape = RectangleShape))
+    }
   }
 
   fun setReview(bookReview: BookReview) {
@@ -130,7 +216,7 @@ class BookReviewDetailsActivity : AppCompatActivity() {
   }
 
   fun addNewEntry(entry: String) {
-    val data = _bookReviewDetailsState.value?.review ?: return
+    val data = _bookReviewDetailsState.value.review
 
     val updatedReview = data.copy(
       entries = data.entries + ReadingEntry(comment = entry),

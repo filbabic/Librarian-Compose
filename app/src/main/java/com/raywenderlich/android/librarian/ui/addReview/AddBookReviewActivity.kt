@@ -149,7 +149,8 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
         onStateChanged = { url ->
           _bookReviewState.value = _bookReviewState.value?.copy(bookImageUrl = url)
           bookUrl.value = url
-        }
+        },
+        isInputValid = bookUrl.value.isNotEmpty()
       )
 
       Spacer(modifier = Modifier.height(16.dp))
@@ -158,6 +159,7 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
         modifier = Modifier.align(CenterHorizontally),
         range = 1..5,
         currentRating = currentRatingFilter.value,
+        isSelectable = true,
         isLargeRating = true,
         onRatingChanged = { newRating ->
           currentRatingFilter.value = newRating
@@ -173,16 +175,23 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
         onStateChanged = { notes ->
           _bookReviewState.value = _bookReviewState.value?.copy(notes = notes)
           bookNotes.value = notes
-        }
+        },
+        isInputValid = bookNotes.value.isNotEmpty()
       )
 
       Spacer(modifier = Modifier.height(16.dp))
+
+      val pickedBook = _bookReviewState.value?.bookAndGenre
 
       ActionButton(
         modifier = Modifier.fillMaxWidth(0.7f),
         text = stringResource(id = R.string.add_book_review_text),
         onClick = ::addBookReview,
-        isEnabled = true
+        isEnabled =
+        bookNotes.value.isNotEmpty()
+          && bookUrl.value.isNotEmpty()
+          && pickedBook != null
+          && pickedBook != EMPTY_BOOK_AND_GENRE
       )
 
       Spacer(modifier = Modifier.height(16.dp))

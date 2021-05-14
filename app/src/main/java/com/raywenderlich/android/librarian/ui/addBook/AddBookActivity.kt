@@ -116,14 +116,16 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
           bookNameState.value = newValue
           _addBookState.value = _addBookState.value.copy(name = newValue)
         },
-        label = stringResource(id = R.string.book_title_hint))
+        label = stringResource(id = R.string.book_title_hint),
+        isInputValid = bookNameState.value.isNotEmpty())
 
       InputField(value = bookDescriptionState.value,
         onStateChanged = { newValue ->
           bookDescriptionState.value = newValue
           _addBookState.value = _addBookState.value.copy(description = newValue)
         },
-        label = stringResource(id = R.string.book_description_hint))
+        label = stringResource(id = R.string.book_description_hint),
+        isInputValid = bookDescriptionState.value.isNotEmpty())
 
       GenrePicker(
         genres = genres, selectedGenreId = _addBookState.value.genreId,
@@ -134,7 +136,10 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
       ActionButton(
         text = stringResource(id = R.string.add_book_button_text),
         onClick = { onAddBookTapped() },
-        isEnabled = true)
+        isEnabled =
+        bookNameState.value.isNotEmpty()
+          && bookDescriptionState.value.isNotEmpty()
+          && _addBookState.value.genreId.isNotEmpty())
     }
   }
 
