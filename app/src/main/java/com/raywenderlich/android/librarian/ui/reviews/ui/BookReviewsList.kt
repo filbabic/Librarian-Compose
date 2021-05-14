@@ -35,7 +35,8 @@
 package com.raywenderlich.android.librarian.ui.reviews.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,30 +60,37 @@ import com.raywenderlich.android.librarian.model.relations.BookReview
 import com.raywenderlich.android.librarian.ui.composeUi.RatingBar
 import dev.chrisbanes.accompanist.coil.CoilImage
 
+@ExperimentalFoundationApi
 @Composable
 fun BookReviewsList(
   bookReviews: List<BookReview>,
-  onItemClick: (BookReview) -> Unit
+  onItemClick: (BookReview) -> Unit,
+  onItemLongClick: (BookReview) -> Unit
 ) {
   LazyColumn(modifier = Modifier.fillMaxSize()) {
     items(bookReviews) { bookReview ->
-      BookReviewItem(bookReview = bookReview, onItemClick)
+      BookReviewItem(bookReview = bookReview, onItemClick, onItemLongClick)
     }
   }
 }
 
+@ExperimentalFoundationApi
 @Composable
-fun BookReviewItem(bookReview: BookReview, onItemClick: (BookReview) -> Unit) {
+fun BookReviewItem(
+  bookReview: BookReview,
+  onItemClick: (BookReview) -> Unit,
+  onItemLongClick: (BookReview) -> Unit) {
   Card(elevation = 8.dp,
     border = BorderStroke(1.dp, MaterialTheme.colors.primary),
     shape = RoundedCornerShape(16.dp),
     modifier = Modifier
       .wrapContentHeight()
       .padding(16.dp)
-      .clickable(
+      .combinedClickable(
         interactionSource = MutableInteractionSource(),
         indication = null,
-        onClick = { onItemClick(bookReview) })) {
+        onClick = { onItemClick(bookReview) },
+        onLongClick = { onItemLongClick(bookReview) })) {
     Row(modifier = Modifier.fillMaxSize()) {
 
       Spacer(modifier = Modifier.width(16.dp))

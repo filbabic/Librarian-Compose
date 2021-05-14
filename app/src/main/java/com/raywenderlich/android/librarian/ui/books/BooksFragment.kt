@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Razeware LLC
+ * Copyright (c) 2021 Razeware LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -45,6 +48,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -62,6 +66,7 @@ import com.raywenderlich.android.librarian.ui.books.filter.ByRating
 import com.raywenderlich.android.librarian.ui.books.filter.Filter
 import com.raywenderlich.android.librarian.ui.books.ui.BookFilter
 import com.raywenderlich.android.librarian.ui.books.ui.BooksList
+import com.raywenderlich.android.librarian.ui.composeUi.DeleteBookDialog
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.utils.toast
 import dagger.hilt.android.AndroidEntryPoint
@@ -88,8 +93,10 @@ class BooksFragment : Fragment() {
 
   private val _booksState = mutableStateOf(emptyList<BookAndGenre>())
   private val _genresState = mutableStateOf<List<Genre>>(emptyList())
+  private val _deleteBookState = mutableStateOf<BookAndGenre?>(null)
   var filter: Filter? = null
 
+  @ExperimentalFoundationApi
   @ExperimentalMaterialApi
   override fun onCreateView(
     inflater: LayoutInflater, container: ViewGroup?,
@@ -109,6 +116,7 @@ class BooksFragment : Fragment() {
     loadBooks()
   }
 
+  @ExperimentalFoundationApi
   @ExperimentalMaterialApi
   @Composable
   fun BooksContent() {
@@ -141,45 +149,66 @@ class BooksFragment : Fragment() {
         }
       }
     }) {
-      Icon(imageVector = Icons.Default.Edit, tint = Color.White, contentDescription = "Filter")
+      Icon(Icons.Default.Edit, tint = Color.White, contentDescription = "Filter")
     }
   }
 
   @ExperimentalMaterialApi
   @Composable
   fun AddNewBook(bookFilterDrawerState: BottomDrawerState) {
-    val coroutineScope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
-    FloatingActionButton(content = {
-      Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Book")
-    }, onClick = {
-      coroutineScope.launch {
-        bookFilterDrawerState.close()
-        showAddBook()
-      }
-    })
+    FloatingActionButton(
+      content = { Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Book") },
+      onClick = {
+        scope.launch {
+          bookFilterDrawerState.close()
+          showAddBook()
+        }
+      })
   }
 
+  @ExperimentalFoundationApi
   @ExperimentalMaterialApi
   @Composable
   fun BookFilterModalDrawer(bookFilterDrawerState: BottomDrawerState) {
-    val books = _booksState.value ?: emptyList()
+    val books = _booksState.value
 
     BottomDrawer(
-      drawerState = bookFilterDrawerState,
       gesturesEnabled = false,
+      drawerState = bookFilterDrawerState,
       drawerContent = {
         BookFilterModalDrawerContent(Modifier.align(CenterHorizontally), bookFilterDrawerState)
-      }) {
-      BooksList(books)
-    }
+      },
+      content = {
+        Box(
+          modifier = Modifier.fillMaxSize(),
+          contentAlignment = Center) {
+          val bookToDelete = _deleteBookState.value
+
+          if (bookToDelete != null) {
+            DeleteBookDialog(item = bookToDelete,
+              message = stringResource(id = R.string.delete_message, bookToDelete.book.name),
+              onDeleteItem = {
+                removeBook(it.book)
+                _deleteBookState.value = null
+              },
+              onDismiss = { _deleteBookState.value = null })
+          }
+
+          BooksList(books, onLongItemTap = { _deleteBookState.value = it })
+        }
+      })
   }
 
   @ExperimentalMaterialApi
   @Composable
-  fun BookFilterModalDrawerContent(modifier: Modifier, bookFilterDrawerState: BottomDrawerState) {
+  fun BookFilterModalDrawerContent(
+    modifier: Modifier,
+    bookFilterDrawerState: BottomDrawerState
+  ) {
     val scope = rememberCoroutineScope()
-    val genres = _genresState.value ?: emptyList()
+    val genres = _genresState.value
 
     BookFilter(modifier, filter, genres, onFilterSelected = { newFilter ->
       scope.launch {
