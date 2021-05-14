@@ -44,17 +44,17 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.relations.BookReview
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.BookReviewDetailsActivity
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
+import com.raywenderlich.android.librarian.ui.reviews.ui.BookReviewsList
 import com.raywenderlich.android.librarian.utils.toast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -72,11 +72,7 @@ class BookReviewsFragment : Fragment() {
   @Inject
   lateinit var repository: LibrarianRepository
 
-  val bookReviewsState: LiveData<List<BookReview>> by lazy {
-    repository.getReviewsFlow().asLiveData(
-      lifecycleScope.coroutineContext
-    )
-  }
+  val bookReviewsState = mutableStateOf(emptyList<BookReview>())
 
   private val addReviewContract by lazy {
     registerForActivityResult(AddBookReviewContract()) { isReviewAdded ->
@@ -96,6 +92,14 @@ class BookReviewsFragment : Fragment() {
       setContent {
         BookReviewsContent()
       }
+    }
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+
+    lifecycleScope.launch {
+      bookReviewsState.value = repository.getReviews()
     }
   }
 
@@ -123,7 +127,9 @@ class BookReviewsFragment : Fragment() {
 
   @Composable
   fun BookReviewsContentWrapper() {
+    val bookReviews = bookReviewsState.value
 
+    BookReviewsList(bookReviews, onItemClick = ::onItemSelected)
   }
 
   fun deleteReview(bookReview: BookReview) {
