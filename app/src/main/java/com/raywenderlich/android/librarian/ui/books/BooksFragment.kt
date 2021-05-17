@@ -66,7 +66,7 @@ import com.raywenderlich.android.librarian.ui.books.filter.ByRating
 import com.raywenderlich.android.librarian.ui.books.filter.Filter
 import com.raywenderlich.android.librarian.ui.books.ui.BookFilter
 import com.raywenderlich.android.librarian.ui.books.ui.BooksList
-import com.raywenderlich.android.librarian.ui.composeUi.DeleteBookDialog
+import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
 import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.utils.toast
@@ -190,7 +190,7 @@ class BooksFragment : Fragment() {
           val bookToDelete = _deleteBookState.value
 
           if (bookToDelete != null) {
-            DeleteBookDialog(item = bookToDelete,
+            DeleteDialog(item = bookToDelete,
               message = stringResource(id = R.string.delete_message, bookToDelete.book.name),
               onDeleteItem = {
                 removeBook(it.book)

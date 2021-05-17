@@ -128,8 +128,10 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
         label = stringResource(id = R.string.book_description_hint),
         isInputValid = bookDescriptionState.value.isNotEmpty())
 
-      GenrePicker(
-        genres = genres, selectedGenreId = _addBookState.value.genreId,
+      SpinnerPicker(
+        pickerText = stringResource(id = R.string.genre_select),
+        items = genres,
+        itemToName = { it.name },
         onItemPicked = {
           _addBookState.value = _addBookState.value.copy(genreId = it.id)
         })

@@ -38,6 +38,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.FloatingActionButton
@@ -57,6 +58,7 @@ import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.ReadingList
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
 import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.ui.readingList.ui.AddReadingList
@@ -72,9 +74,11 @@ class ReadingListFragment : Fragment() {
   @Inject
   lateinit var repository: LibrarianRepository
 
-  val readingListsState = mutableStateOf(emptyList<ReadingListsWithBooks>())
+  private val readingListsState = mutableStateOf(emptyList<ReadingListsWithBooks>())
+  private val _deleteListState = mutableStateOf<ReadingListsWithBooks?>(null)
   private val _isShowingAddReadingListState = mutableStateOf(false)
 
+  @ExperimentalFoundationApi
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
@@ -100,6 +104,7 @@ class ReadingListFragment : Fragment() {
     }
   }
 
+  @ExperimentalFoundationApi
   @Composable
   fun ReadingListContent() {
     Scaffold(
@@ -109,6 +114,7 @@ class ReadingListFragment : Fragment() {
     }
   }
 
+  @ExperimentalFoundationApi
   @Composable
   fun ReadingListContentWrapper() {
     val readingLists = readingListsState.value
@@ -116,7 +122,11 @@ class ReadingListFragment : Fragment() {
     Box(modifier = Modifier.fillMaxSize(),
       contentAlignment = Alignment.Center) {
 
-      ReadingLists(readingLists = readingLists, onItemClick = { onItemSelected(it) })
+      ReadingLists(
+        readingLists,
+        onItemClick = { onItemSelected(it) },
+        onLongItemTap = { _deleteListState.value = it }
+      )
 
       val isShowingAddList = _isShowingAddReadingListState.value
 
@@ -127,6 +137,20 @@ class ReadingListFragment : Fragment() {
             addReadingList(name)
             _isShowingAddReadingListState.value = false
           }
+        )
+      }
+
+      val deleteList = _deleteListState.value
+
+      if (deleteList != null) {
+        DeleteDialog(
+          item = deleteList,
+          message = stringResource(id = R.string.delete_message, deleteList.name),
+          onDeleteItem = { readingList ->
+            deleteReadingList(readingList)
+            _deleteListState.value = null
+          },
+          onDismiss = { _deleteListState.value = null }
         )
       }
     }
@@ -155,6 +179,8 @@ class ReadingListFragment : Fragment() {
           readingListsWithBooks.books.map { it.book.id }
         )
       )
+
+      readingListsState.value = repository.getReadingLists()
     }
   }
 

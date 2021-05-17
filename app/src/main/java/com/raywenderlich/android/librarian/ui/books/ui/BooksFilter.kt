@@ -52,8 +52,8 @@ import com.raywenderlich.android.librarian.ui.books.filter.ByGenre
 import com.raywenderlich.android.librarian.ui.books.filter.ByRating
 import com.raywenderlich.android.librarian.ui.books.filter.Filter
 import com.raywenderlich.android.librarian.ui.composeUi.ActionButton
-import com.raywenderlich.android.librarian.ui.composeUi.GenrePicker
 import com.raywenderlich.android.librarian.ui.composeUi.RatingBar
+import com.raywenderlich.android.librarian.ui.composeUi.SpinnerPicker
 
 @Composable
 fun BookFilter(
@@ -112,9 +112,11 @@ fun BookFilter(
     val currentlySelectedGenre = currentGenreFilter.value
 
     if (currentFilter.value == 1) {
-      GenrePicker(
-        genres = genres,
-        selectedGenreId = currentlySelectedGenre?.id ?: "",
+      SpinnerPicker(
+        pickerText = stringResource(id = R.string.genre_select),
+        items = genres,
+        preselectedItem = currentlySelectedGenre,
+        itemToName = { it.name },
         onItemPicked = { currentGenreFilter.value = it })
     }
 

@@ -61,7 +61,6 @@ import com.raywenderlich.android.librarian.model.Review
 import com.raywenderlich.android.librarian.model.relations.BookAndGenre
 import com.raywenderlich.android.librarian.model.state.AddBookReviewState
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
-import com.raywenderlich.android.librarian.ui.addReview.ui.BookPicker
 import com.raywenderlich.android.librarian.ui.composeUi.*
 import com.raywenderlich.android.librarian.utils.EMPTY_BOOK_AND_GENRE
 import dagger.hilt.android.AndroidEntryPoint
@@ -136,8 +135,11 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
 
       Spacer(modifier = Modifier.height(8.dp))
 
-      BookPicker(
-        books = _books.value, selectedBookId = currentlySelectedBook.value.book.id,
+      SpinnerPicker(
+        pickerText = stringResource(id = R.string.book_select),
+        items = _books.value,
+        itemToName = { it.book.name },
+        preselectedItem = currentlySelectedBook.value,
         onItemPicked = { bookAndGenre ->
           _bookReviewState.value = _bookReviewState.value?.copy(bookAndGenre = bookAndGenre)
 

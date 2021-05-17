@@ -35,7 +35,8 @@
 package com.raywenderlich.android.librarian.ui.readingList.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -55,32 +56,37 @@ import androidx.compose.ui.unit.sp
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
 
+@ExperimentalFoundationApi
 @Composable
 fun ReadingLists(
   readingLists: List<ReadingListsWithBooks>,
-  onItemClick: (ReadingListsWithBooks) -> Unit
+  onItemClick: (ReadingListsWithBooks) -> Unit,
+  onLongItemTap: (ReadingListsWithBooks) -> Unit
 ) {
   LazyColumn(modifier = Modifier.fillMaxSize()) {
     items(readingLists) { readingList ->
-      ReadingListItem(readingList, onItemClick)
+      ReadingListItem(readingList, onItemClick, onLongItemTap)
     }
   }
 }
 
+@ExperimentalFoundationApi
 @Composable
 fun ReadingListItem(
   readingList: ReadingListsWithBooks,
-  onItemClick: (ReadingListsWithBooks) -> Unit
+  onItemClick: (ReadingListsWithBooks) -> Unit,
+  onLongItemTap: (ReadingListsWithBooks) -> Unit
 ) {
   Card(
     modifier = Modifier
       .height(75.dp)
       .fillMaxWidth()
       .padding(8.dp)
-      .clickable(
+      .combinedClickable(
         interactionSource = remember { MutableInteractionSource() },
         onClick = { onItemClick(readingList) },
-        indication = null
+        indication = null,
+        onLongClick = { onLongItemTap(readingList) }
       ),
     elevation = 8.dp,
     border = BorderStroke(1.dp, color = MaterialTheme.colors.primary),

@@ -58,7 +58,7 @@ import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.relations.BookReview
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.BookReviewDetailsActivity
-import com.raywenderlich.android.librarian.ui.composeUi.DeleteReviewDialog
+import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
 import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.ui.reviews.ui.BookReviewsList
@@ -155,7 +155,7 @@ class BookReviewsFragment : Fragment() {
       )
 
       if (reviewToDelete != null) {
-        DeleteReviewDialog(
+        DeleteDialog(
           item = reviewToDelete,
           message = stringResource(id = R.string.delete_review_message, reviewToDelete.book.name),
           onDeleteItem = { bookReview ->
