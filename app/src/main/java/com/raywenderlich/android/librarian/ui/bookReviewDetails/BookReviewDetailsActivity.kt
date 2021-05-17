@@ -38,6 +38,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -86,6 +87,8 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class BookReviewDetailsActivity : AppCompatActivity() {
+
+  private val bookReviewDetailsViewModel by viewModels<BookReviewDetailsViewModel>()
 
   @Inject
   lateinit var repository: LibrarianRepository
