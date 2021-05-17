@@ -1,13 +1,15 @@
 package com.raywenderlich.android.librarian.ui.readingListDetails
 
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
 import com.raywenderlich.android.librarian.model.BookItem
 import com.raywenderlich.android.librarian.model.relations.BookAndGenre
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class ReadingListDetailsViewModel @ViewModelInject constructor(
+@HiltViewModel
+class ReadingListDetailsViewModel @Inject constructor(
   private val repository: LibrarianRepository
 ) : ViewModel() {
 

@@ -1,14 +1,16 @@
 package com.raywenderlich.android.librarian.ui.readingList
 
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class ReadingListViewModel @ViewModelInject constructor(
+@HiltViewModel
+class ReadingListViewModel @Inject constructor(
   private val repository: LibrarianRepository
 ) : ViewModel() {
 

@@ -1,14 +1,16 @@
 package com.raywenderlich.android.librarian.ui.addBook
 
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.raywenderlich.android.librarian.model.Genre
 import com.raywenderlich.android.librarian.model.state.AddBookState
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class AddBookViewModel @ViewModelInject constructor(
+@HiltViewModel
+class AddBookViewModel @Inject constructor(
   private val repository: LibrarianRepository
 ) : ViewModel() {
 

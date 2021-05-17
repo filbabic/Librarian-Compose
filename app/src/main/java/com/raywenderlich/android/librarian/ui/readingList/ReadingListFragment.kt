@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.ReadingList
@@ -77,6 +78,7 @@ class ReadingListFragment : Fragment() {
 
   @Inject
   lateinit var repository: LibrarianRepository
+  private val readingListViewModel by viewModels<ReadingListViewModel>()
 
   private val readingListsState = mutableStateOf(emptyList<ReadingListsWithBooks>())
   private val _deleteListState = mutableStateOf<ReadingListsWithBooks?>(null)

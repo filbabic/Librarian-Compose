@@ -1,11 +1,13 @@
 package com.raywenderlich.android.librarian.ui.reviews
 
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
 import com.raywenderlich.android.librarian.model.relations.BookReview
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class BookReviewsViewModel @ViewModelInject constructor(
+@HiltViewModel
+class BookReviewsViewModel @Inject constructor(
   private val repository: LibrarianRepository
 ) : ViewModel() {
 

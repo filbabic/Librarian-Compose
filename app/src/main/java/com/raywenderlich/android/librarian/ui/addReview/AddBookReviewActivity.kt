@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Razeware LLC
+ * Copyright (c) 2021 Razeware LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -54,7 +55,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.Review
@@ -73,8 +73,9 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
 
   @Inject
   lateinit var repository: LibrarianRepository
+  private val addBookReviewViewModel by viewModels<AddReviewViewModel>()
 
-  private val _bookReviewState = MutableLiveData(AddBookReviewState())
+  private val _bookReviewState = mutableStateOf(AddBookReviewState())
   private val _books = mutableStateOf(emptyList<BookAndGenre>())
 
   companion object {
@@ -186,7 +187,7 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
 
       Spacer(modifier = Modifier.height(16.dp))
 
-      val pickedBook = _bookReviewState.value?.bookAndGenre
+      val pickedBook = _bookReviewState.value.bookAndGenre
 
       ActionButton(
         modifier = Modifier.fillMaxWidth(0.7f),
@@ -195,7 +196,7 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
         isEnabled =
         bookNotes.value.isNotEmpty()
           && bookUrl.value.isNotEmpty()
-          && pickedBook != null
+
           && pickedBook != EMPTY_BOOK_AND_GENRE
       )
 
