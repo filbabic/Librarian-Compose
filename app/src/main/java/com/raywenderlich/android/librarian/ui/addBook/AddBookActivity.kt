@@ -44,27 +44,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.raywenderlich.android.librarian.R
-import com.raywenderlich.android.librarian.model.Genre
 import com.raywenderlich.android.librarian.model.state.AddBookState
-import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.composeUi.*
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class AddBookActivity : AppCompatActivity(), AddBookView {
-
-  private val _addBookState = mutableStateOf(AddBookState())
-  private val _genresState = mutableStateOf(emptyList<Genre>())
-
-  @Inject
-  lateinit var repository: LibrarianRepository
 
   private val addBookViewModel by viewModels<AddBookViewModel>()
 
@@ -99,47 +90,34 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
 
   @Composable
   fun AddBookFormContent() {
-    val genres = _genresState.value ?: emptyList()
-    val bookNameState = remember { mutableStateOf("") }
-    val bookDescriptionState = remember { mutableStateOf("") }
+    val genres by addBookViewModel.genresState.observeAsState(emptyList())
+    val addBookState by addBookViewModel.addBookState.observeAsState(AddBookState())
 
     Column(
       modifier = Modifier.fillMaxSize(),
       horizontalAlignment = Alignment.CenterHorizontally) {
-      InputField(value = bookNameState.value,
-        onStateChanged = { newValue ->
-          bookNameState.value = newValue
-          _addBookState.value = _addBookState.value.copy(name = newValue)
-          addBookViewModel.onNameChanged(newValue)
-        },
+      InputField(value = addBookState.name,
+        onStateChanged = { newValue -> addBookViewModel.onNameChanged(newValue) },
         label = stringResource(id = R.string.book_title_hint),
-        isInputValid = bookNameState.value.isNotEmpty())
+        isInputValid = addBookState.name.isNotEmpty())
 
-      InputField(value = bookDescriptionState.value,
-        onStateChanged = { newValue ->
-          bookDescriptionState.value = newValue
-          _addBookState.value = _addBookState.value.copy(description = newValue)
-          addBookViewModel.onDescriptionChanged(newValue)
-        },
+      InputField(value = addBookState.description,
+        onStateChanged = { newValue -> addBookViewModel.onDescriptionChanged(newValue) },
         label = stringResource(id = R.string.book_description_hint),
-        isInputValid = bookDescriptionState.value.isNotEmpty())
+        isInputValid = addBookState.description.isNotEmpty())
 
       SpinnerPicker(
         pickerText = stringResource(id = R.string.genre_select),
         items = genres,
         itemToName = { it.name },
-        onItemPicked = {
-          _addBookState.value = _addBookState.value.copy(genreId = it.id)
-          addBookViewModel.genrePicked(it)
-        })
+        onItemPicked = { addBookViewModel.genrePicked(it) })
 
       ActionButton(
         text = stringResource(id = R.string.add_book_button_text),
         onClick = { addBookViewModel.onAddBookTapped() },
-        isEnabled =
-        bookNameState.value.isNotEmpty()
-          && bookDescriptionState.value.isNotEmpty()
-          && _addBookState.value.genreId.isNotEmpty())
+        isEnabled = addBookState.name.isNotEmpty()
+          && addBookState.description.isNotEmpty()
+          && addBookState.genreId.isNotEmpty())
     }
   }
 

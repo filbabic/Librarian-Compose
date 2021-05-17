@@ -46,7 +46,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -56,10 +57,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.raywenderlich.android.librarian.R
-import com.raywenderlich.android.librarian.model.Genre
-import com.raywenderlich.android.librarian.model.relations.BookAndGenre
-import com.raywenderlich.android.librarian.repository.LibrarianRepository
-import com.raywenderlich.android.librarian.ui.books.filter.Filter
 import com.raywenderlich.android.librarian.ui.books.ui.BookFilter
 import com.raywenderlich.android.librarian.ui.books.ui.BooksList
 import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
@@ -68,7 +65,6 @@ import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.utils.toast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 
 private const val REQUEST_CODE_ADD_BOOK = 201
@@ -85,14 +81,7 @@ class BooksFragment : Fragment() {
     }
   }
 
-  @Inject
-  lateinit var repository: LibrarianRepository
   private val booksViewModel by viewModels<BooksViewModel>()
-
-  private val _booksState = mutableStateOf(emptyList<BookAndGenre>())
-  private val _genresState = mutableStateOf<List<Genre>>(emptyList())
-  private val _deleteBookState = mutableStateOf<BookAndGenre?>(null)
-  var filter: Filter? = null
 
   @ExperimentalFoundationApi
   @ExperimentalMaterialApi
@@ -112,6 +101,8 @@ class BooksFragment : Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
+    booksViewModel.loadGenres()
+    booksViewModel.loadBooks()
   }
 
   @ExperimentalFoundationApi
@@ -170,7 +161,10 @@ class BooksFragment : Fragment() {
   @ExperimentalMaterialApi
   @Composable
   fun BookFilterModalDrawer(bookFilterDrawerState: BottomDrawerState) {
-    val books = _booksState.value
+    val books by booksViewModel.booksState.observeAsState(emptyList())
+    val deleteDialogBook by booksViewModel.deleteBookState.observeAsState()
+
+    val bookToDelete = deleteDialogBook
 
     BottomDrawer(
       gesturesEnabled = false,
@@ -182,7 +176,6 @@ class BooksFragment : Fragment() {
         Box(
           modifier = Modifier.fillMaxSize(),
           contentAlignment = Center) {
-          val bookToDelete = _deleteBookState.value
 
           if (bookToDelete != null) {
             DeleteDialog(item = bookToDelete,
@@ -206,14 +199,13 @@ class BooksFragment : Fragment() {
     bookFilterDrawerState: BottomDrawerState
   ) {
     val scope = rememberCoroutineScope()
-    val genres = _genresState.value
+    val genres by booksViewModel.genresState.observeAsState(emptyList())
+    val filter = booksViewModel.filter
 
     BookFilter(modifier, filter, genres, onFilterSelected = { newFilter ->
-      scope.launch {
-        bookFilterDrawerState.close()
-        filter = newFilter
-        booksViewModel.loadBooks()
-      }
+      scope.launch { bookFilterDrawerState.close() }
+      booksViewModel.filter = newFilter
+      booksViewModel.loadBooks()
     })
   }
 

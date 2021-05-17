@@ -49,7 +49,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -63,13 +63,11 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.lifecycleScope
 import com.raywenderlich.android.librarian.R
-import com.raywenderlich.android.librarian.model.ReadingEntry
-import com.raywenderlich.android.librarian.model.Review
 import com.raywenderlich.android.librarian.model.relations.BookReview
-import com.raywenderlich.android.librarian.repository.LibrarianRepository
-import com.raywenderlich.android.librarian.ui.bookReviewDetails.animation.*
+import com.raywenderlich.android.librarian.ui.bookReviewDetails.animation.BookReviewDetailsTransitionState
+import com.raywenderlich.android.librarian.ui.bookReviewDetails.animation.Initial
+import com.raywenderlich.android.librarian.ui.bookReviewDetails.animation.animateBookReviewDetails
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.readingEntries.AddReadingEntryDialog
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.readingEntries.ReadingEntries
 import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
@@ -81,23 +79,11 @@ import com.raywenderlich.android.librarian.utils.EMPTY_GENRE
 import com.raywenderlich.android.librarian.utils.formatDateToText
 import dagger.hilt.android.AndroidEntryPoint
 import dev.chrisbanes.accompanist.coil.CoilImage
-import kotlinx.coroutines.launch
-import java.util.*
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class BookReviewDetailsActivity : AppCompatActivity() {
 
   private val bookReviewDetailsViewModel by viewModels<BookReviewDetailsViewModel>()
-
-  @Inject
-  lateinit var repository: LibrarianRepository
-
-  private val _bookReviewDetailsState = mutableStateOf(EMPTY_BOOK_REVIEW)
-  private val _genreState = mutableStateOf(EMPTY_GENRE)
-  private val _deleteEntryState = mutableStateOf<ReadingEntry?>(null)
-  private val _isShowingAddEntryState = mutableStateOf(false)
-  private val _screenState = mutableStateOf<BookReviewDetailsScreenState>(Initial)
 
   companion object {
     private const val KEY_BOOK_REVIEW = "book_review"
@@ -119,7 +105,7 @@ class BookReviewDetailsActivity : AppCompatActivity() {
       return
     }
 
-    setReview(data)
+    bookReviewDetailsViewModel.setReview(data)
     setContent {
       LibrarianTheme {
         BookReviewDetailsContent()
@@ -129,11 +115,11 @@ class BookReviewDetailsActivity : AppCompatActivity() {
 
   @Composable
   fun BookReviewDetailsContent() {
-    val animationState by _screenState
+    val animationState by bookReviewDetailsViewModel.screenAnimationState.observeAsState(Initial)
     val state = animateBookReviewDetails(screenState = animationState)
 
     LaunchedEffect(Unit, block = {
-      _screenState.value = Loaded
+      bookReviewDetailsViewModel.onFirstLoad()
     })
 
     Scaffold(topBar = { BookReviewDetailsTopBar() },
@@ -144,8 +130,9 @@ class BookReviewDetailsActivity : AppCompatActivity() {
 
   @Composable
   fun BookReviewDetailsTopBar() {
-    val reviewState = _bookReviewDetailsState.value
-    val bookName = reviewState.book.name
+    val reviewState by bookReviewDetailsViewModel.bookReviewDetailsState.observeAsState()
+    val bookName = reviewState?.book?.name
+      ?: stringResource(id = R.string.book_review_details_title)
 
     TopBar(title = bookName, onBackPressed = { onBackPressed() })
   }
@@ -154,15 +141,19 @@ class BookReviewDetailsActivity : AppCompatActivity() {
   fun AddReadingEntry(state: BookReviewDetailsTransitionState) {
     FloatingActionButton(
       modifier = Modifier.size(state.floatingButtonSize),
-      onClick = { _isShowingAddEntryState.value = true }) {
+      onClick = { bookReviewDetailsViewModel.onAddEntryTapped() }) {
       Icon(imageVector = Icons.Default.Add, contentDescription = "Add Reading Entry")
     }
   }
 
   @Composable
   fun BookReviewDetailsInformation(state: BookReviewDetailsTransitionState) {
-    val bookReview = _bookReviewDetailsState.value
-    val genre = _genreState.value
+    val bookReview by bookReviewDetailsViewModel.bookReviewDetailsState.observeAsState(EMPTY_BOOK_REVIEW)
+    val genre by bookReviewDetailsViewModel.genreState.observeAsState(EMPTY_GENRE)
+    val deleteEntryState by bookReviewDetailsViewModel.deleteEntryState.observeAsState()
+    val isShowingAddEntry by bookReviewDetailsViewModel.isShowingAddEntryState.observeAsState(false)
+
+    val entryToDelete = deleteEntryState
 
     Box(
       modifier = Modifier.fillMaxSize(),
@@ -170,7 +161,7 @@ class BookReviewDetailsActivity : AppCompatActivity() {
 
       ReadingEntries(
         readingEntries = bookReview.review.entries,
-        onItemLongClick = { _deleteEntryState.value = it },
+        onItemLongClick = { bookReviewDetailsViewModel.onItemLongTapped(it) },
         content = {
           Column(
             modifier = Modifier
@@ -269,67 +260,21 @@ class BookReviewDetailsActivity : AppCompatActivity() {
           Spacer(Modifier.size(16.dp))
         })
 
-      if (_isShowingAddEntryState.value) {
+      if (isShowingAddEntry) {
         AddReadingEntryDialog(
-          onDismiss = { _isShowingAddEntryState.value = false },
-          onReadingEntryFinished = {
-            addNewEntry(it)
-            _isShowingAddEntryState.value = false
-          }
+          onDismiss = { bookReviewDetailsViewModel.onDialogDismiss() },
+          onReadingEntryFinished = { bookReviewDetailsViewModel.addNewEntry(it) }
         )
       }
-
-      val entryToDelete = _deleteEntryState.value
 
       if (entryToDelete != null) {
         DeleteDialog(
           item = entryToDelete,
           message = stringResource(id = R.string.delete_entry_message),
-          onDeleteItem = {
-            removeReadingEntry(it)
-            _deleteEntryState.value = null
-          },
-          onDismiss = { _deleteEntryState.value = null }
+          onDeleteItem = { bookReviewDetailsViewModel.removeReadingEntry(it) },
+          onDismiss = { bookReviewDetailsViewModel.onDialogDismiss() }
         )
       }
-    }
-  }
-
-  fun setReview(bookReview: BookReview) {
-    _bookReviewDetailsState.value = bookReview
-
-    lifecycleScope.launch {
-      _genreState.value = repository.getGenreById(bookReview.book.genreId)
-    }
-  }
-
-  fun addNewEntry(entry: String) {
-    val data = _bookReviewDetailsState.value.review
-
-    val updatedReview = data.copy(
-      entries = data.entries + ReadingEntry(comment = entry),
-      lastUpdatedDate = Date()
-    )
-
-    updateReview(updatedReview)
-  }
-
-  fun removeReadingEntry(readingEntry: ReadingEntry) {
-    val data = _bookReviewDetailsState.value.review
-
-    val updatedReview = data.copy(
-      entries = data.entries - readingEntry,
-      lastUpdatedDate = Date()
-    )
-
-    updateReview(updatedReview)
-  }
-
-  private fun updateReview(updatedReview: Review) {
-    lifecycleScope.launch {
-      repository.updateReview(updatedReview)
-
-      setReview(repository.getReviewById(updatedReview.id))
     }
   }
 }

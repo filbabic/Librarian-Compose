@@ -47,8 +47,8 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -56,23 +56,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.raywenderlich.android.librarian.R
-import com.raywenderlich.android.librarian.model.relations.BookAndGenre
 import com.raywenderlich.android.librarian.model.state.AddBookReviewState
-import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.composeUi.*
 import com.raywenderlich.android.librarian.utils.EMPTY_BOOK_AND_GENRE
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
 
-  @Inject
-  lateinit var repository: LibrarianRepository
   private val addBookReviewViewModel by viewModels<AddReviewViewModel>()
-
-  private val _bookReviewState = mutableStateOf(AddBookReviewState())
-  private val _books = mutableStateOf(emptyList<BookAndGenre>())
 
   companion object {
     fun getIntent(context: Context) = Intent(context, AddBookReviewActivity::class.java)
@@ -105,10 +97,8 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
 
   @Composable
   fun AddBookReviewForm() {
-    val bookUrl = remember { mutableStateOf("") }
-    val bookNotes = remember { mutableStateOf("") }
-    val currentRatingFilter = remember { mutableStateOf(0) }
-    val currentlySelectedBook = remember { mutableStateOf(EMPTY_BOOK_AND_GENRE) }
+    val books by addBookReviewViewModel.booksState.observeAsState(emptyList())
+    val reviewState by addBookReviewViewModel.bookReviewState.observeAsState(AddBookReviewState())
 
     Column(
       modifier = Modifier
@@ -128,26 +118,18 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
 
       SpinnerPicker(
         pickerText = stringResource(id = R.string.book_select),
-        items = _books.value,
+        items = books,
         itemToName = { it.book.name },
-        preselectedItem = currentlySelectedBook.value,
-        onItemPicked = { bookAndGenre ->
-          _bookReviewState.value = _bookReviewState.value.copy(bookAndGenre = bookAndGenre)
-          currentlySelectedBook.value = bookAndGenre
-          addBookReviewViewModel.onBookPicked(bookAndGenre)
-        })
+        preselectedItem = reviewState.bookAndGenre,
+        onItemPicked = { bookAndGenre -> addBookReviewViewModel.onBookPicked(bookAndGenre) })
 
       Spacer(modifier = Modifier.height(8.dp))
 
       InputField(
         label = stringResource(id = R.string.book_image_url_input_hint),
-        value = bookUrl.value,
-        onStateChanged = { url ->
-          _bookReviewState.value = _bookReviewState.value.copy(bookImageUrl = url)
-          bookUrl.value = url
-          addBookReviewViewModel.onImageUrlChanged(url)
-        },
-        isInputValid = bookUrl.value.isNotEmpty()
+        value = reviewState.bookImageUrl,
+        onStateChanged = { url -> addBookReviewViewModel.onImageUrlChanged(url) },
+        isInputValid = reviewState.bookImageUrl.isNotEmpty()
       )
 
       Spacer(modifier = Modifier.height(16.dp))
@@ -155,40 +137,29 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
       RatingBar(
         modifier = Modifier.align(CenterHorizontally),
         range = 1..5,
-        currentRating = currentRatingFilter.value,
+        currentRating = reviewState.rating,
         isSelectable = true,
         isLargeRating = true,
-        onRatingChanged = { newRating ->
-          currentRatingFilter.value = newRating
-          addBookReviewViewModel.onRatingSelected(newRating)
-        })
+        onRatingChanged = { newRating -> addBookReviewViewModel.onRatingSelected(newRating) })
 
       Spacer(modifier = Modifier.height(16.dp))
 
       InputField(
         label = stringResource(id = R.string.review_notes_hint),
-        value = bookNotes.value,
-        onStateChanged = { notes ->
-          _bookReviewState.value = _bookReviewState.value.copy(notes = notes)
-          bookNotes.value = notes
-          addBookReviewViewModel.onNotesChanged(notes)
-        },
-        isInputValid = bookNotes.value.isNotEmpty()
+        value = reviewState.notes,
+        onStateChanged = { notes -> addBookReviewViewModel.onNotesChanged(notes) },
+        isInputValid = reviewState.notes.isNotEmpty()
       )
 
       Spacer(modifier = Modifier.height(16.dp))
-
-      val pickedBook = _bookReviewState.value.bookAndGenre
 
       ActionButton(
         modifier = Modifier.fillMaxWidth(0.7f),
         text = stringResource(id = R.string.add_book_review_text),
         onClick = addBookReviewViewModel::addBookReview,
-        isEnabled =
-        bookNotes.value.isNotEmpty()
-          && bookUrl.value.isNotEmpty()
-
-          && pickedBook != EMPTY_BOOK_AND_GENRE
+        isEnabled = reviewState.bookImageUrl.isNotEmpty() &&
+          reviewState.notes.isNotEmpty() &&
+          reviewState.bookAndGenre != EMPTY_BOOK_AND_GENRE
       )
 
       Spacer(modifier = Modifier.height(16.dp))

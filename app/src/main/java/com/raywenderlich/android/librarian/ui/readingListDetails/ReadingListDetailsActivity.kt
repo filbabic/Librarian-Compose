@@ -48,16 +48,15 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.BookItem
-import com.raywenderlich.android.librarian.model.relations.BookAndGenre
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
-import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.books.ui.BooksList
 import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
 import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
@@ -65,18 +64,11 @@ import com.raywenderlich.android.librarian.ui.composeUi.TopBar
 import com.raywenderlich.android.librarian.ui.readingListDetails.ui.BookPicker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class ReadingListDetailsActivity : AppCompatActivity() {
 
-  @Inject
-  lateinit var repository: LibrarianRepository
   private val readingListDetailsViewModel by viewModels<ReadingListDetailsViewModel>()
-
-  private val _addBookState = mutableStateOf<List<BookItem>>(emptyList())
-  private val readingListState = mutableStateOf<ReadingListsWithBooks?>(null)
-  private val _deleteBookState = mutableStateOf<BookAndGenre?>(null)
 
   companion object {
     private const val KEY_READING_LIST = "reading_list"
@@ -113,13 +105,14 @@ class ReadingListDetailsActivity : AppCompatActivity() {
   @ExperimentalMaterialApi
   @Composable
   fun ReadingListDetailsContent() {
+    val readingListState by readingListDetailsViewModel.readingListState.observeAsState()
     val bottomDrawerState = rememberBottomDrawerState(initialValue = BottomDrawerValue.Closed)
 
     Scaffold(
-      topBar = { ReadingListDetailsTopBar(readingListState.value) },
+      topBar = { ReadingListDetailsTopBar(readingListState) },
       floatingActionButton = { AddBookToReadingList(bottomDrawerState) }
     ) {
-      ReadingListDetailsModalDrawer(bottomDrawerState, readingListState.value)
+      ReadingListDetailsModalDrawer(bottomDrawerState, readingListState)
     }
   }
 
@@ -158,7 +151,10 @@ class ReadingListDetailsActivity : AppCompatActivity() {
   fun ReadingListDetailsModalDrawer(
     drawerState: BottomDrawerState,
     readingList: ReadingListsWithBooks?) {
-    val bookToDelete = _deleteBookState.value
+    val deleteBookState by readingListDetailsViewModel.deleteBookState.observeAsState()
+    val addBookState by readingListDetailsViewModel.addBookState.observeAsState(emptyList())
+
+    val bookToDelete = deleteBookState
 
     BottomDrawer(
       modifier = Modifier.fillMaxWidth(),
@@ -168,7 +164,7 @@ class ReadingListDetailsActivity : AppCompatActivity() {
         ReadingListDetailsModalDrawerContent(
           modifier = Modifier.align(Alignment.CenterHorizontally),
           drawerState = drawerState,
-          _addBookState.value
+          addBookState
         )
       }) {
       Box(
@@ -179,7 +175,7 @@ class ReadingListDetailsActivity : AppCompatActivity() {
       ) {
         BooksList(
           readingList?.books ?: emptyList(),
-          onLongItemTap = { book -> _deleteBookState.value = book }
+          onLongItemTap = { book -> readingListDetailsViewModel.onItemLongTapped(book) }
         )
 
         if (bookToDelete != null) {
