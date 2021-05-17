@@ -35,15 +35,15 @@
 package com.raywenderlich.android.librarian.ui.composeUi
 
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.Genre
 
@@ -59,8 +59,8 @@ fun GenrePicker(
 
   Row(verticalAlignment = Alignment.CenterVertically) {
 
-    TextButton(onClick = { isGenresPickerOpen.value = true },
-      content = { Text(text = stringResource(id = R.string.genre_select)) })
+    DropdownMenuButton(text = stringResource(id = R.string.genre_select),
+      onClick = { isGenresPickerOpen.value = true })
 
     DropdownMenu(expanded = isGenresPickerOpen.value,
       onDismissRequest = { isGenresPickerOpen.value = false }) {
@@ -75,5 +75,12 @@ fun GenrePicker(
     }
 
     Text(text = selectedGenreName)
+  }
+}
+
+@Composable
+fun DropdownMenuButton(text: String, onClick: () -> Unit) {
+  Button(onClick = onClick, modifier = Modifier.padding(end = 16.dp)) {
+    Text(text = text, color = MaterialTheme.colors.onSecondary)
   }
 }
