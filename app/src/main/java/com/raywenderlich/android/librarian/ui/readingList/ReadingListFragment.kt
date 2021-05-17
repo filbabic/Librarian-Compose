@@ -50,7 +50,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -60,7 +60,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
-import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
 import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
@@ -68,18 +67,11 @@ import com.raywenderlich.android.librarian.ui.readingList.ui.AddReadingList
 import com.raywenderlich.android.librarian.ui.readingList.ui.ReadingLists
 import com.raywenderlich.android.librarian.ui.readingListDetails.ReadingListDetailsActivity
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class ReadingListFragment : Fragment() {
 
-  @Inject
-  lateinit var repository: LibrarianRepository
   private val readingListViewModel by viewModels<ReadingListViewModel>()
-
-  private val readingListsState = mutableStateOf(emptyList<ReadingListsWithBooks>())
-  private val _deleteListState = mutableStateOf<ReadingListsWithBooks?>(null)
-  private val _isShowingAddReadingListState = mutableStateOf(false)
 
   @ExperimentalFoundationApi
   override fun onCreateView(
@@ -109,7 +101,11 @@ class ReadingListFragment : Fragment() {
   @ExperimentalFoundationApi
   @Composable
   fun ReadingListContentWrapper() {
-    val readingLists = readingListsState.value
+    val readingLists by readingListViewModel.readingListsState.observeAsState(emptyList())
+    val isShowingAddReadingList by readingListViewModel.isShowingAddReadingListState.observeAsState(false)
+    val readingListToDelete by readingListViewModel.deleteReadingListState.observeAsState()
+
+    val deleteList = readingListToDelete
 
     Box(modifier = Modifier.fillMaxSize(),
       contentAlignment = Alignment.Center) {
@@ -120,9 +116,8 @@ class ReadingListFragment : Fragment() {
         onLongItemTap = { readingListViewModel.onDeleteReadingList(it) }
       )
 
-      val isShowingAddList = _isShowingAddReadingListState.value
 
-      if (isShowingAddList) {
+      if (isShowingAddReadingList) {
         AddReadingList(
           onDismiss = { readingListViewModel.onDialogDismiss() },
           onAddList = { name ->
@@ -131,8 +126,6 @@ class ReadingListFragment : Fragment() {
           }
         )
       }
-
-      val deleteList = _deleteListState.value
 
       if (deleteList != null) {
         DeleteDialog(
