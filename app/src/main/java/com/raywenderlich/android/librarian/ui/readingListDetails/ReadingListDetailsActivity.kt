@@ -53,10 +53,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.lifecycleScope
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.BookItem
-import com.raywenderlich.android.librarian.model.ReadingList
 import com.raywenderlich.android.librarian.model.relations.BookAndGenre
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
@@ -98,7 +96,7 @@ class ReadingListDetailsActivity : AppCompatActivity() {
     val readingList = intent.getParcelableExtra<ReadingListsWithBooks>(KEY_READING_LIST)
 
     if (readingList != null) {
-      setReadingList(readingList)
+      readingListDetailsViewModel.setReadingList(readingList)
     } else {
       finish()
       return
@@ -132,7 +130,7 @@ class ReadingListDetailsActivity : AppCompatActivity() {
 
     FloatingActionButton(onClick = {
       if (bottomDrawerState.isClosed) {
-        refreshBooks()
+        readingListDetailsViewModel.refreshBooks()
 
         coroutineScope.launch {
           bottomDrawerState.expand()
@@ -189,10 +187,10 @@ class ReadingListDetailsActivity : AppCompatActivity() {
             item = bookToDelete,
             message = stringResource(id = R.string.delete_message, bookToDelete.book.name),
             onDeleteItem = {
-              removeBookFromReadingList(it.book.id)
-              _deleteBookState.value = null
+              readingListDetailsViewModel.removeBookFromReadingList(it.book.id)
+              readingListDetailsViewModel.onDialogDismiss()
             },
-            onDismiss = { _deleteBookState.value = null }
+            onDismiss = { readingListDetailsViewModel.onDialogDismiss() }
           )
         }
       }
@@ -211,77 +209,11 @@ class ReadingListDetailsActivity : AppCompatActivity() {
     BookPicker(
       modifier = modifier,
       books = addBookState,
-      onBookSelected = { bookPickerItemSelected(it) },
+      onBookSelected = { readingListDetailsViewModel.bookPickerItemSelected(it) },
       onBookPicked = {
-        addBookToReadingList(addBookState.firstOrNull { it.isSelected }?.bookId)
+        readingListDetailsViewModel.addBookToReadingList(addBookState.firstOrNull { it.isSelected }?.bookId)
 
         coroutineScope.launch { drawerState.close() }
       }, onDismiss = { coroutineScope.launch { drawerState.close() } })
-  }
-
-  fun setReadingList(readingListsWithBooks: ReadingListsWithBooks) {
-    lifecycleScope.launch {
-      readingListState.value = repository.getReadingListById(readingListsWithBooks.id)
-    }
-    refreshBooks()
-  }
-
-  fun refreshBooks() {
-    lifecycleScope.launch {
-      val books = repository.getBooks()
-      val readingListBooks = readingListState.value?.books?.map { it.book.id } ?: emptyList()
-
-      val freshBooks = books.filter { it.book.id !in readingListBooks }
-
-      _addBookState.value = freshBooks.map { BookItem(it.book.id, it.book.name, false) }
-    }
-  }
-
-  fun addBookToReadingList(bookId: String?) {
-    val data = readingListState.value
-
-    if (data != null && bookId != null) {
-      val bookIds = (data.books.map { it.book.id } + bookId).distinct()
-
-      val newReadingList = ReadingList(
-        data.id,
-        data.name,
-        bookIds
-      )
-
-      updateReadingList(newReadingList)
-    }
-  }
-
-  fun removeBookFromReadingList(bookId: String) {
-    val data = readingListState.value
-
-    if (data != null) {
-      val bookIds = data.books.map { it.book.id } - bookId
-
-      val newReadingList = ReadingList(
-        data.id,
-        data.name,
-        bookIds
-      )
-
-      updateReadingList(newReadingList)
-    }
-  }
-
-  private fun updateReadingList(newReadingList: ReadingList) {
-    lifecycleScope.launch {
-      repository.updateReadingList(newReadingList)
-
-      readingListState.value = repository.getReadingListById(newReadingList.id)
-      refreshBooks()
-    }
-  }
-
-  fun bookPickerItemSelected(bookItem: BookItem) {
-    val books = _addBookState.value
-    val newBooks = books.map { BookItem(it.bookId, it.name, it.bookId == bookItem.bookId) }
-
-    _addBookState.value = newBooks
   }
 }
