@@ -32,33 +32,45 @@
  * THE SOFTWARE.
  */
 
-package com.raywenderlich.android.librarian.ui.composeUi
+package com.raywenderlich.android.librarian.ui.addReview.ui
 
-import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.ButtonDefaults.buttonColors
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import com.raywenderlich.android.librarian.R
+import com.raywenderlich.android.librarian.model.relations.BookAndGenre
 
 @Composable
-fun DialogButton(
-  modifier: Modifier = Modifier,
-  @StringRes text: Int,
-  onClickAction: () -> Unit) {
+fun BookPicker(
+  books: List<BookAndGenre>,
+  selectedBookId: String,
+  onItemPicked: (BookAndGenre) -> Unit
+) {
+  val isPickerOpen = remember { mutableStateOf(false) }
+  val selectedBookName = books.firstOrNull { it.book.id == selectedBookId }?.book?.name
+    ?: "None"
 
-  TextButton(
-    modifier = modifier.padding(8.dp),
-    colors = buttonColors(
-      backgroundColor = MaterialTheme.colors.primary,
-      contentColor = MaterialTheme.colors.onSecondary
-    ),
-    onClick = onClickAction
-  ) {
-    Text(text = stringResource(id = text))
+  Row(verticalAlignment = Alignment.CenterVertically) {
+
+    TextButton(onClick = { isPickerOpen.value = true },
+      content = { Text(text = stringResource(id = R.string.book_select)) })
+
+    DropdownMenu(expanded = isPickerOpen.value,
+      onDismissRequest = { isPickerOpen.value = false }) {
+      for (book in books) {
+        DropdownMenuItem(onClick = {
+          onItemPicked(book)
+          isPickerOpen.value = false
+        }) {
+          Text(text = book.book.name, color = MaterialTheme.colors.onPrimary)
+        }
+      }
+    }
+
+    Text(text = selectedBookName, color = MaterialTheme.colors.onPrimary)
   }
 }

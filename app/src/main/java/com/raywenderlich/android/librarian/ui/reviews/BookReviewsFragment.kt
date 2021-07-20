@@ -38,18 +38,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.Icon
-import androidx.compose.foundation.layout.ColumnScope.gravity
-import androidx.compose.foundation.layout.RowScope.gravity
-import androidx.compose.foundation.layout.Stack
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -77,10 +76,21 @@ class BookReviewsFragment : Fragment() {
 
   private val bookReviewsViewModel by viewModels<BookReviewsViewModel>()
 
+  private val addReviewContract by lazy {
+    registerForActivityResult(AddBookReviewContract()) { isReviewAdded ->
+      if (isReviewAdded) {
+        activity?.toast("Review added!")
+      }
+    }
+  }
+
+  @ExperimentalFoundationApi
   override fun onCreateView(
     inflater: LayoutInflater, container: ViewGroup?,
     savedInstanceState: Bundle?
-  ): View? {
+  ): View {
+    addReviewContract
+
     return ComposeView(requireContext()).apply {
       setContent {
         LibrarianTheme {
@@ -90,6 +100,7 @@ class BookReviewsFragment : Fragment() {
     }
   }
 
+  @ExperimentalFoundationApi
   @Composable
   fun BookReviewsContent() {
     Scaffold(
@@ -108,32 +119,32 @@ class BookReviewsFragment : Fragment() {
   @Composable
   fun AddBookReview() {
     FloatingActionButton(onClick = { startAddBookReview() }) {
-      Icon(asset = Icons.Default.Add)
+      Icon(imageVector = Icons.Default.Add, contentDescription = "Add Book Review")
     }
   }
 
+  @ExperimentalFoundationApi
   @Composable
   fun BookReviewsContentWrapper() {
-    val bookReviews by bookReviewsViewModel.bookReviewsState.observeAsState(emptyList())
-    val deleteReviewState by bookReviewsViewModel.deleteReviewState.observeAsState()
+    val bookReviews by bookReviewsViewModel.bookReviewsState.collectAsState(emptyList())
+    val deleteReviewState = bookReviewsViewModel.deleteReviewState
 
-    val reviewToDelete = deleteReviewState
-
-    Stack(
-      modifier = Modifier
-        .gravity(Alignment.CenterHorizontally)
-        .gravity(Alignment.CenterVertically)
-        .fillMaxSize()
+    Box(
+      modifier = Modifier.fillMaxSize(),
+      contentAlignment = Alignment.Center
     ) {
-      BookReviewsList(bookReviews,
-        onItemClick = ::onItemSelected,
-        onLongItemClick = { bookReview -> bookReviewsViewModel.onItemLongTapped(bookReview) })
 
-      if (reviewToDelete != null) {
+      BookReviewsList(
+        bookReviews,
+        onItemClick = ::onItemSelected,
+        onItemLongClick = { bookReview -> bookReviewsViewModel.onItemLongTapped(bookReview) }
+      )
+
+      if (deleteReviewState != null) {
         DeleteDialog(
-          item = reviewToDelete,
-          message = stringResource(id = R.string.delete_message, reviewToDelete.book.name),
-          onDeleteItem = { review -> bookReviewsViewModel.deleteReview(review) },
+          item = deleteReviewState,
+          message = stringResource(id = R.string.delete_review_message, deleteReviewState.book.name),
+          onDeleteItem = { bookReview -> bookReviewsViewModel.deleteReview(bookReview) },
           onDismiss = { bookReviewsViewModel.onDialogDismissed() }
         )
       }
@@ -141,14 +152,7 @@ class BookReviewsFragment : Fragment() {
   }
 
   private fun startAddBookReview() {
-    val addReview =
-      registerForActivityResult(AddBookReviewContract()) { isReviewAdded ->
-        if (isReviewAdded) {
-          activity?.toast("Review added!")
-        }
-      }
-
-    addReview.launch(REQUEST_CODE_ADD_REVIEW)
+    addReviewContract.launch(REQUEST_CODE_ADD_REVIEW)
   }
 
   private fun onItemSelected(item: BookReview) {

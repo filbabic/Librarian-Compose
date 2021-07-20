@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Razeware LLC
+ * Copyright (c) 2021 Razeware LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,48 +37,44 @@ package com.raywenderlich.android.librarian.ui.addBook
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.res.stringResource
 import com.raywenderlich.android.librarian.R
-import com.raywenderlich.android.librarian.model.state.AddBookState
 import com.raywenderlich.android.librarian.ui.composeUi.*
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class AddBookActivity : AppCompatActivity(), AddBookView {
 
+  private val addBookViewModel by viewModels<AddBookViewModel>()
+
   companion object {
     fun getIntent(context: Context): Intent = Intent(context, AddBookActivity::class.java)
   }
 
-  private val addBookViewModel by viewModels<AddBookViewModel>()
-
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    setContent {
+      LibrarianTheme {
+        AddBookContent()
+      }
+    }
     addBookViewModel.setView(this)
     addBookViewModel.loadGenres()
-    setContent { AddBookContent() }
   }
 
   @Composable
   fun AddBookContent() {
-    LibrarianTheme {
-      Scaffold(topBar = { AddBookTopBar() }) {
-        AddBookFormContent()
-      }
+    Scaffold(topBar = { AddBookTopBar() }) {
+      AddBookFormContent()
     }
   }
 
@@ -86,30 +82,31 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
   fun AddBookTopBar() {
     TopBar(
       title = stringResource(id = R.string.add_book_title),
-      onBackPressed = { onBackPressed() }
-    )
+      onBackPressed = { onBackPressed() })
   }
 
   @Composable
   fun AddBookFormContent() {
-    val genres by addBookViewModel.genresState.observeAsState(emptyList())
-    val addBookState by addBookViewModel.addBookState.observeAsState(AddBookState())
+    val genres = addBookViewModel.genresState
+    val addBookState = addBookViewModel.addBookState
 
     Column(
       modifier = Modifier.fillMaxSize(),
-      horizontalGravity = Alignment.CenterHorizontally
+      horizontalAlignment = Alignment.CenterHorizontally
     ) {
       InputField(
         value = addBookState.name,
-        isInputValid = addBookState.name.isNotEmpty(),
+        onStateChanged = { newValue -> addBookViewModel.onNameChanged(newValue) },
         label = stringResource(id = R.string.book_title_hint),
-        onStateChanged = { name -> addBookViewModel.onNameChanged(name) })
+        isInputValid = addBookState.name.isNotEmpty()
+      )
 
       InputField(
         value = addBookState.description,
-        isInputValid = addBookState.description.isNotEmpty(),
+        onStateChanged = { newValue -> addBookViewModel.onDescriptionChanged(newValue) },
         label = stringResource(id = R.string.book_description_hint),
-        onStateChanged = { description -> addBookViewModel.onDescriptionChanged(description) })
+        isInputValid = addBookState.description.isNotEmpty()
+      )
 
       SpinnerPicker(
         pickerText = stringResource(id = R.string.genre_select),
@@ -118,10 +115,12 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
         onItemPicked = { addBookViewModel.genrePicked(it) })
 
       ActionButton(
-        modifier = Modifier.fillMaxWidth(),
         text = stringResource(id = R.string.add_book_button_text),
-        isEnabled = addBookState.description.isNotEmpty() && addBookState.name.isNotEmpty() && addBookState.genreId.isNotEmpty(),
-        onClick = { addBookViewModel.onAddBookTapped() })
+        onClick = { addBookViewModel.onAddBookTapped() },
+        isEnabled = addBookState.name.isNotEmpty()
+          && addBookState.description.isNotEmpty()
+          && addBookState.genreId.isNotEmpty()
+      )
     }
   }
 

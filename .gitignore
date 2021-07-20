@@ -76,3 +76,6 @@ fastlane/readme.md
 !/.idea/encodings.xml
 !/.idea/copyright/
 !/.idea/compiler.xml
+/.idea/codeStyles/codeStyleConfig.xml
+/.idea/codeStyles/Project.xml
+/.idea/inspectionProfiles/Project_Default.xml

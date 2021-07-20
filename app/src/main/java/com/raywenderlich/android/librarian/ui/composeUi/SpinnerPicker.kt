@@ -34,31 +34,66 @@
 
 package com.raywenderlich.android.librarian.ui.composeUi
 
-import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.ButtonDefaults.buttonColors
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.raywenderlich.android.librarian.R
 
 @Composable
-fun DialogButton(
-  modifier: Modifier = Modifier,
-  @StringRes text: Int,
-  onClickAction: () -> Unit) {
+fun <T> SpinnerPicker(
+  pickerText: String,
+  preselectedItem: T? = null,
+  items: List<T>,
+  itemToName: (T) -> String,
+  onItemPicked: (T) -> Unit
+) {
+  val isPickerExpanded = remember { mutableStateOf(false) }
+  val pickedItem = remember { mutableStateOf(preselectedItem?.let(itemToName) ?: "") }
 
-  TextButton(
-    modifier = modifier.padding(8.dp),
-    colors = buttonColors(
-      backgroundColor = MaterialTheme.colors.primary,
-      contentColor = MaterialTheme.colors.onSecondary
-    ),
-    onClick = onClickAction
-  ) {
-    Text(text = stringResource(id = text))
+  Row(modifier = Modifier
+    .wrapContentWidth()
+    .padding(start = 16.dp, end = 16.dp),
+    verticalAlignment = Alignment.CenterVertically) {
+    DropdownMenuButton(text = pickerText) {
+      isPickerExpanded.value = true
+    }
+
+    DropdownMenu(
+      modifier = Modifier
+        .height(300.dp)
+        .width(200.dp),
+      expanded = isPickerExpanded.value,
+      onDismissRequest = { isPickerExpanded.value = false }) {
+      for (item in items) {
+        DropdownMenuItem(onClick = {
+          onItemPicked(item)
+          isPickerExpanded.value = false
+          pickedItem.value = itemToName(item)
+        }) {
+          Text(text = itemToName(item))
+        }
+      }
+    }
+
+    val currentlySelected = if (pickedItem.value.isEmpty()) "None" else pickedItem.value
+
+    Text(
+      text = stringResource(id = R.string.current_selection, currentlySelected),
+      color = MaterialTheme.colors.onPrimary
+    )
+  }
+}
+
+
+@Composable
+fun DropdownMenuButton(text: String, onClick: () -> Unit) {
+  Button(onClick = onClick, modifier = Modifier.padding(end = 16.dp)) {
+    Text(text = text, color = MaterialTheme.colors.onSecondary)
   }
 }

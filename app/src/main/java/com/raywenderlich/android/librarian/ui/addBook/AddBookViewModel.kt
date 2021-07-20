@@ -1,25 +1,28 @@
 package com.raywenderlich.android.librarian.ui.addBook
 
-import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.raywenderlich.android.librarian.model.Book
 import com.raywenderlich.android.librarian.model.Genre
 import com.raywenderlich.android.librarian.model.state.AddBookState
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AddBookViewModel @ViewModelInject constructor(
+@HiltViewModel
+class AddBookViewModel @Inject constructor(
   private val repository: LibrarianRepository
 ) : ViewModel() {
 
-  private val _addBookState = MutableLiveData(AddBookState())
-  val addBookState: LiveData<AddBookState> = _addBookState
+  var addBookState by mutableStateOf(AddBookState())
+    private set
 
-  private val _genresState = MutableLiveData<List<Genre>>()
-  val genresState: LiveData<List<Genre>> = _genresState
+  var genresState by mutableStateOf<List<Genre>>(emptyList())
+    private set
 
   private lateinit var view: AddBookView
 
@@ -27,14 +30,15 @@ class AddBookViewModel @ViewModelInject constructor(
     this.view = view
   }
 
+
   fun loadGenres() {
     viewModelScope.launch {
-      _genresState.value = repository.getGenres()
+      genresState = repository.getGenres()
     }
   }
 
   fun onAddBookTapped() {
-    val bookState = _addBookState.value ?: return
+    val bookState = addBookState
 
     if (bookState.name.isNotEmpty() &&
       bookState.description.isNotEmpty() &&
@@ -55,14 +59,14 @@ class AddBookViewModel @ViewModelInject constructor(
   }
 
   fun onNameChanged(name: String) {
-    _addBookState.value = _addBookState.value?.copy(name = name)
+    addBookState = addBookState.copy(name = name)
   }
 
   fun onDescriptionChanged(description: String) {
-    _addBookState.value = _addBookState.value?.copy(description = description)
+    addBookState = addBookState.copy(description = description)
   }
 
   fun genrePicked(genre: Genre) {
-    _addBookState.value = _addBookState.value?.copy(genreId = genre.id)
+    addBookState = addBookState.copy(genreId = genre.id)
   }
 }

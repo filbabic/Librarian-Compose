@@ -1,24 +1,29 @@
 package com.raywenderlich.android.librarian.ui.reviews
 
-import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.raywenderlich.android.librarian.model.relations.BookReview
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class BookReviewsViewModel @ViewModelInject constructor(
+@HiltViewModel
+class BookReviewsViewModel @Inject constructor(
   private val repository: LibrarianRepository
 ) : ViewModel() {
 
-  val bookReviewsState: LiveData<List<BookReview>> = repository.getReviewsFlow().asLiveData(
-    viewModelScope.coroutineContext
-  )
+  val bookReviewsState: Flow<List<BookReview>> = repository.getReviewsFlow()
 
-  private val _deleteReviewState = MutableLiveData<BookReview>()
-  val deleteReviewState: LiveData<BookReview> = _deleteReviewState
+  var deleteReviewState by mutableStateOf<BookReview?>(null)
+    private set
 
   fun onItemLongTapped(bookReview: BookReview) {
-    _deleteReviewState.value = bookReview
+    deleteReviewState = bookReview
   }
 
   fun deleteReview(bookReview: BookReview) {
@@ -29,6 +34,6 @@ class BookReviewsViewModel @ViewModelInject constructor(
   }
 
   fun onDialogDismissed() {
-    _deleteReviewState.value = null
+    deleteReviewState = null
   }
 }

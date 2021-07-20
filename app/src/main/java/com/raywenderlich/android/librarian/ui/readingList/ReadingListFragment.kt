@@ -38,22 +38,24 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.Icon
-import androidx.compose.foundation.layout.ColumnScope.gravity
-import androidx.compose.foundation.layout.RowScope.gravity
-import androidx.compose.foundation.layout.Stack
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.raywenderlich.android.librarian.R
@@ -71,11 +73,12 @@ class ReadingListFragment : Fragment() {
 
   private val readingListViewModel by viewModels<ReadingListViewModel>()
 
+  @ExperimentalFoundationApi
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
     savedInstanceState: Bundle?
-  ): View? {
+  ): View {
     return ComposeView(requireContext()).apply {
       setContent {
         LibrarianTheme {
@@ -85,6 +88,7 @@ class ReadingListFragment : Fragment() {
     }
   }
 
+  @ExperimentalFoundationApi
   @Composable
   fun ReadingListContent() {
     Scaffold(
@@ -94,38 +98,45 @@ class ReadingListFragment : Fragment() {
     }
   }
 
+  @ExperimentalFoundationApi
   @Composable
   fun ReadingListContentWrapper() {
-    val readingListsState by readingListViewModel.readingListsState.observeAsState(emptyList())
-    val deleteListState by readingListViewModel.deleteReadingListState
-      .observeAsState()
+    val readingLists by readingListViewModel.readingListsState.collectAsState(emptyList())
+    val isShowingAddReadingList = readingListViewModel.isShowingAddReadingListState
+    val readingListToDelete = readingListViewModel.deleteReadingListState
 
-    val deleteList = deleteListState
+    val deleteList = readingListToDelete
 
-    val isShowingAddList by readingListViewModel.isShowingAddReadingListState.observeAsState(false)
-
-    Stack(
-      modifier = Modifier.fillMaxSize()
-        .gravity(Alignment.CenterVertically)
-        .gravity(Alignment.CenterHorizontally)
+    Box(
+      modifier = Modifier.fillMaxSize(),
+      contentAlignment = Alignment.Center
     ) {
+
       ReadingLists(
-        readingLists = readingListsState,
-        onItemClick = { readingList -> onItemSelected(readingList) },
-        onLongItemClick = { list -> readingListViewModel.onDeleteReadingList(list) }
+        readingLists,
+        onItemClick = { onItemSelected(it) },
+        onLongItemTap = { readingListViewModel.onDeleteReadingList(it) }
       )
 
-      if (isShowingAddList) {
+
+      if (isShowingAddReadingList) {
         AddReadingList(
           onDismiss = { readingListViewModel.onDialogDismiss() },
-          onAddList = { name -> readingListViewModel.addReadingList(name) })
+          onAddList = { name ->
+            readingListViewModel.addReadingList(name)
+            readingListViewModel.onDialogDismiss()
+          }
+        )
       }
 
       if (deleteList != null) {
         DeleteDialog(
           item = deleteList,
           message = stringResource(id = R.string.delete_message, deleteList.name),
-          onDeleteItem = { readingList -> readingListViewModel.deleteReadingList(readingList) },
+          onDeleteItem = { readingList ->
+            readingListViewModel.deleteReadingList(readingList)
+            readingListViewModel.onDialogDismiss()
+          },
           onDismiss = { readingListViewModel.onDialogDismiss() }
         )
       }
@@ -134,8 +145,15 @@ class ReadingListFragment : Fragment() {
 
   @Composable
   fun AddReadingListButton() {
-    FloatingActionButton(onClick = { readingListViewModel.onAddReadingListTapped() }) {
-      Icon(asset = Icons.Default.Add)
+    val isShowingAddReadingList = readingListViewModel.isShowingAddReadingListState
+    val size by animateDpAsState(targetValue = if (isShowingAddReadingList) 0.dp else 56.dp)
+
+    FloatingActionButton(
+      modifier = Modifier.size(size),
+      onClick = {
+        readingListViewModel.onAddReadingListTapped()
+      }) {
+      Icon(imageVector = Icons.Default.Add, contentDescription = "Add Reading List")
     }
   }
 

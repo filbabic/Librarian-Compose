@@ -1,20 +1,20 @@
-package com.raywenderlich.android.librarian.ui.bookPicker
+package com.raywenderlich.android.librarian.ui.readingListDetails.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.Text
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ColumnScope.gravity
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumnFor
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,6 +26,7 @@ import com.raywenderlich.android.librarian.ui.composeUi.ActionButton
 
 @Composable
 fun BookPicker(
+  modifier: Modifier,
   books: List<BookItem>,
   onBookSelected: (BookItem) -> Unit,
   onBookPicked: () -> Unit,
@@ -49,17 +50,21 @@ fun BookPicker(
       ActionButton(
         modifier = Modifier.weight(0.5f),
         text = stringResource(id = R.string.cancel),
-        onClick = { onDismiss() })
+        onClick = { onDismiss() },
+        isEnabled = true)
     }
 
-    LazyColumnFor(items = books) { bookItem ->
-      BookPickerItem(bookItem = bookItem, onBookSelected = onBookSelected)
+    LazyColumn {
+      items(books) { bookItem ->
+        BookPickerItem(bookItem = bookItem, onBookSelected = onBookSelected)
+      }
     }
   } else {
     Text(
       text = stringResource(id = R.string.no_books_to_add_to_reading_list),
-      modifier = Modifier
-        .gravity(Alignment.CenterHorizontally)
+      modifier =
+      modifier
+        .fillMaxWidth()
         .padding(16.dp),
       fontSize = 16.sp,
       fontWeight = FontWeight.SemiBold,
@@ -69,13 +74,16 @@ fun BookPicker(
 
     ActionButton(
       enabledColor = colorResource(id = R.color.orange_200),
-      modifier = Modifier
-        .gravity(Alignment.CenterHorizontally)
-        .fillMaxWidth(0.5f),
+      modifier =
+      modifier.fillMaxWidth(0.5f),
       text = stringResource(id = R.string.cancel),
-      onClick = { onDismiss() })
+      onClick = { onDismiss() },
+      isEnabled = true)
 
-    Image(asset = imageResource(id = R.drawable.box_of_books))
+    Image(
+      modifier = modifier,
+      painter = painterResource(id = R.drawable.box_of_books),
+      contentDescription = null)
   }
 }
 
@@ -86,9 +94,10 @@ fun BookPickerItem(
   onBookSelected: (BookItem) -> Unit
 ) {
   Row(
-    modifier = Modifier.fillMaxWidth()
+    modifier = Modifier
+      .fillMaxWidth()
       .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
-    verticalGravity = Alignment.CenterVertically
+    verticalAlignment = Alignment.CenterVertically
   ) {
     RadioButton(
       selected = bookItem.isSelected,
