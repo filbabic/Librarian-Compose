@@ -1,12 +1,17 @@
 package com.raywenderlich.android.librarian.ui.readingListDetails
 
-import androidx.lifecycle.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.raywenderlich.android.librarian.model.BookItem
 import com.raywenderlich.android.librarian.model.ReadingList
 import com.raywenderlich.android.librarian.model.relations.BookAndGenre
 import com.raywenderlich.android.librarian.model.relations.ReadingListsWithBooks
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -15,18 +20,21 @@ class ReadingListDetailsViewModel @Inject constructor(
   private val repository: LibrarianRepository
 ) : ViewModel() {
 
-  private val _addBookState = MutableLiveData<List<BookItem>>()
-  val addBookState: LiveData<List<BookItem>> = _addBookState
-
-  var readingListState: LiveData<ReadingListsWithBooks> = MutableLiveData()
+  var addBookState by mutableStateOf(emptyList<BookItem>())
     private set
 
-  private val _deleteBookState = MutableLiveData<BookAndGenre?>()
-  val deleteBookState: LiveData<BookAndGenre?> = _deleteBookState
+  var readingListState by mutableStateOf(ReadingListsWithBooks("", "", emptyList()))
+    private set
+
+  var deleteBookState by mutableStateOf<BookAndGenre?>(null)
+    private set
 
   fun setReadingList(readingListsWithBooks: ReadingListsWithBooks) {
-    readingListState = repository.getReadingListByIdFlow(readingListsWithBooks.id)
-      .asLiveData(viewModelScope.coroutineContext)
+    viewModelScope.launch {
+      repository.getReadingListByIdFlow(readingListsWithBooks.id).collect {
+        readingListState = it
+      }
+    }
 
     refreshBooks()
   }
@@ -34,18 +42,18 @@ class ReadingListDetailsViewModel @Inject constructor(
   fun refreshBooks() {
     viewModelScope.launch {
       val books = repository.getBooks()
-      val readingListBooks = readingListState.value?.books?.map { it.book.id } ?: emptyList()
+      val readingListBooks = readingListState.books.map { it.book.id }
 
       val freshBooks = books.filter { it.book.id !in readingListBooks }
 
-      _addBookState.value = freshBooks.map { BookItem(it.book.id, it.book.name, false) }
+      addBookState = freshBooks.map { BookItem(it.book.id, it.book.name, false) }
     }
   }
 
   fun addBookToReadingList(bookId: String?) {
-    val data = readingListState.value
+    val data = readingListState
 
-    if (data != null && bookId != null) {
+    if (bookId != null) {
       val bookIds = (data.books.map { it.book.id } + bookId).distinct()
 
       val newReadingList = ReadingList(
@@ -59,17 +67,17 @@ class ReadingListDetailsViewModel @Inject constructor(
   }
 
   fun onItemLongTapped(bookAndGenre: BookAndGenre) {
-    _deleteBookState.value = bookAndGenre
+    deleteBookState = bookAndGenre
   }
 
   fun onDialogDismiss() {
-    _deleteBookState.value = null
+    deleteBookState = null
   }
 
   fun removeBookFromReadingList(bookId: String) {
-    val data = readingListState.value
+    val data = readingListState
 
-    if (data != null) {
+    if (data.id.isNotEmpty()) {
       val bookIds = data.books.map { it.book.id } - bookId
 
       val newReadingList = ReadingList(
@@ -92,9 +100,9 @@ class ReadingListDetailsViewModel @Inject constructor(
   }
 
   fun bookPickerItemSelected(bookItem: BookItem) {
-    val books = _addBookState.value ?: return
+    val books = addBookState
     val newBooks = books.map { BookItem(it.bookId, it.name, it.bookId == bookItem.bookId) }
 
-    _addBookState.value = newBooks
+    addBookState = newBooks
   }
 }

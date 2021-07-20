@@ -49,8 +49,8 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -101,14 +101,16 @@ class ReadingListFragment : Fragment() {
   @ExperimentalFoundationApi
   @Composable
   fun ReadingListContentWrapper() {
-    val readingLists by readingListViewModel.readingListsState.observeAsState(emptyList())
-    val isShowingAddReadingList by readingListViewModel.isShowingAddReadingListState.observeAsState(false)
-    val readingListToDelete by readingListViewModel.deleteReadingListState.observeAsState()
+    val readingLists by readingListViewModel.readingListsState.collectAsState(emptyList())
+    val isShowingAddReadingList = readingListViewModel.isShowingAddReadingListState
+    val readingListToDelete = readingListViewModel.deleteReadingListState
 
     val deleteList = readingListToDelete
 
-    Box(modifier = Modifier.fillMaxSize(),
-      contentAlignment = Alignment.Center) {
+    Box(
+      modifier = Modifier.fillMaxSize(),
+      contentAlignment = Alignment.Center
+    ) {
 
       ReadingLists(
         readingLists,
@@ -143,7 +145,7 @@ class ReadingListFragment : Fragment() {
 
   @Composable
   fun AddReadingListButton() {
-    val isShowingAddReadingList = readingListViewModel.isShowingAddReadingListState.value ?: false
+    val isShowingAddReadingList = readingListViewModel.isShowingAddReadingListState
     val size by animateDpAsState(targetValue = if (isShowingAddReadingList) 0.dp else 56.dp)
 
     FloatingActionButton(

@@ -34,11 +34,11 @@
 
 package com.raywenderlich.android.librarian.ui.bookReviewDetails
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.raywenderlich.android.librarian.model.Genre
 import com.raywenderlich.android.librarian.model.ReadingEntry
 import com.raywenderlich.android.librarian.model.Review
 import com.raywenderlich.android.librarian.model.relations.BookReview
@@ -46,6 +46,8 @@ import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.animation.BookReviewDetailsScreenState
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.animation.Initial
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.animation.Loaded
+import com.raywenderlich.android.librarian.utils.EMPTY_BOOK_REVIEW
+import com.raywenderlich.android.librarian.utils.EMPTY_GENRE
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.util.*
@@ -56,35 +58,33 @@ class BookReviewDetailsViewModel @Inject constructor(
   private val repository: LibrarianRepository
 ) : ViewModel() {
 
-  private val _bookReviewDetailsState = MutableLiveData<BookReview>()
-  val bookReviewDetailsState: LiveData<BookReview> = _bookReviewDetailsState
+  var bookReviewDetailsState by mutableStateOf(EMPTY_BOOK_REVIEW)
+    private set
+  var genreState by mutableStateOf(EMPTY_GENRE)
+    private set
+  var deleteEntryState by mutableStateOf<ReadingEntry?>(null)
+    private set
 
-  private val _genreState = MutableLiveData<Genre>()
-  val genreState: LiveData<Genre> = _genreState
+  var isShowingAddEntryState by mutableStateOf(false)
+    private set
 
-  private val _deleteEntryState = MutableLiveData<ReadingEntry?>()
-  val deleteEntryState: LiveData<ReadingEntry?> = _deleteEntryState
-
-  private val _isShowingAddEntryState = MutableLiveData(false)
-  val isShowingAddEntryState: LiveData<Boolean> = _isShowingAddEntryState
-
-  private val _screenAnimationState = MutableLiveData<BookReviewDetailsScreenState>(Initial)
-  val screenAnimationState: LiveData<BookReviewDetailsScreenState> = _screenAnimationState
+  var screenAnimationState by mutableStateOf<BookReviewDetailsScreenState>(Initial)
+    private set
 
   fun setReview(bookReview: BookReview) {
-    _bookReviewDetailsState.value = bookReview
+    bookReviewDetailsState = bookReview
 
     viewModelScope.launch {
-      _genreState.value = repository.getGenreById(bookReview.book.genreId)
+      genreState = repository.getGenreById(bookReview.book.genreId)
     }
   }
 
-  fun onFirstLoad(){
-    _screenAnimationState.value = Loaded
+  fun onFirstLoad() {
+    screenAnimationState = Loaded
   }
 
   fun addNewEntry(entry: String) {
-    val data = _bookReviewDetailsState.value?.review ?: return
+    val data = bookReviewDetailsState.review
 
     val updatedReview = data.copy(
       entries = data.entries + ReadingEntry(comment = entry),
@@ -104,12 +104,12 @@ class BookReviewDetailsViewModel @Inject constructor(
   }
 
   fun onDialogDismiss() {
-    _deleteEntryState.value = null
-    _isShowingAddEntryState.value = false
+    deleteEntryState = null
+    isShowingAddEntryState = false
   }
 
   fun removeReadingEntry(readingEntry: ReadingEntry) {
-    val data = _bookReviewDetailsState.value?.review ?: return
+    val data = bookReviewDetailsState.review
 
     val updatedReview = data.copy(
       entries = data.entries - readingEntry,
@@ -121,10 +121,10 @@ class BookReviewDetailsViewModel @Inject constructor(
   }
 
   fun onItemLongTapped(readingEntry: ReadingEntry) {
-    _deleteEntryState.value = readingEntry
+    deleteEntryState = readingEntry
   }
 
   fun onAddEntryTapped() {
-    _isShowingAddEntryState.value = true
+    isShowingAddEntryState = true
   }
 }

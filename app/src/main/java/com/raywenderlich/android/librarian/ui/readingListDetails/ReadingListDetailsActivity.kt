@@ -47,8 +47,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -106,7 +108,7 @@ class ReadingListDetailsActivity : AppCompatActivity() {
   @ExperimentalMaterialApi
   @Composable
   fun ReadingListDetailsContent() {
-    val readingListState by readingListDetailsViewModel.readingListState.observeAsState()
+    val readingListState = readingListDetailsViewModel.readingListState
     val bottomDrawerState = rememberBottomDrawerState(initialValue = BottomDrawerValue.Closed)
 
     CompositionLocalProvider(LocalReadingList provides readingListState) {
@@ -154,12 +156,11 @@ class ReadingListDetailsActivity : AppCompatActivity() {
   @ExperimentalMaterialApi
   @Composable
   fun ReadingListDetailsModalDrawer(
-    drawerState: BottomDrawerState) {
+    drawerState: BottomDrawerState
+  ) {
     val readingList = LocalReadingList.current
-    val deleteBookState by readingListDetailsViewModel.deleteBookState.observeAsState()
-    val addBookState by readingListDetailsViewModel.addBookState.observeAsState(emptyList())
-
-    val bookToDelete = deleteBookState
+    val deleteBookState = readingListDetailsViewModel.deleteBookState
+    val addBookState = readingListDetailsViewModel.addBookState
 
     BottomDrawer(
       modifier = Modifier.fillMaxWidth(),
@@ -183,10 +184,10 @@ class ReadingListDetailsActivity : AppCompatActivity() {
           onLongItemTap = { book -> readingListDetailsViewModel.onItemLongTapped(book) }
         )
 
-        if (bookToDelete != null) {
+        if (deleteBookState != null) {
           DeleteDialog(
-            item = bookToDelete,
-            message = stringResource(id = R.string.delete_message, bookToDelete.book.name),
+            item = deleteBookState,
+            message = stringResource(id = R.string.delete_message, deleteBookState.book.name),
             onDeleteItem = {
               readingListDetailsViewModel.removeBookFromReadingList(it.book.id)
               readingListDetailsViewModel.onDialogDismiss()

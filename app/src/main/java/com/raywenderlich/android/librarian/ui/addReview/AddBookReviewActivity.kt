@@ -47,8 +47,8 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -56,7 +56,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.raywenderlich.android.librarian.R
-import com.raywenderlich.android.librarian.model.state.AddBookReviewState
 import com.raywenderlich.android.librarian.ui.composeUi.*
 import com.raywenderlich.android.librarian.utils.EMPTY_BOOK_AND_GENRE
 import dagger.hilt.android.AndroidEntryPoint
@@ -97,8 +96,8 @@ class AddBookReviewActivity : AppCompatActivity(), AddReviewView {
 
   @Composable
   fun AddBookReviewForm() {
-    val books by addBookReviewViewModel.booksState.observeAsState(emptyList())
-    val reviewState by addBookReviewViewModel.bookReviewState.observeAsState(AddBookReviewState())
+    val books by addBookReviewViewModel.booksState.collectAsState(initial = emptyList())
+    val reviewState = addBookReviewViewModel.bookReviewState
 
     Column(
       modifier = Modifier

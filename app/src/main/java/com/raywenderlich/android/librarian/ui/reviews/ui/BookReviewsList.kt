@@ -36,6 +36,7 @@ package com.raywenderlich.android.librarian.ui.reviews.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -55,10 +56,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.relations.BookReview
 import com.raywenderlich.android.librarian.ui.composeUi.RatingBar
-import dev.chrisbanes.accompanist.coil.CoilImage
 
 @ExperimentalFoundationApi
 @Composable
@@ -79,8 +80,10 @@ fun BookReviewsList(
 fun BookReviewItem(
   bookReview: BookReview,
   onItemClick: (BookReview) -> Unit,
-  onItemLongClick: (BookReview) -> Unit) {
-  Card(elevation = 8.dp,
+  onItemLongClick: (BookReview) -> Unit
+) {
+  Card(
+    elevation = 8.dp,
     border = BorderStroke(1.dp, MaterialTheme.colors.primary),
     shape = RoundedCornerShape(16.dp),
     modifier = Modifier
@@ -90,26 +93,32 @@ fun BookReviewItem(
         interactionSource = MutableInteractionSource(),
         indication = null,
         onClick = { onItemClick(bookReview) },
-        onLongClick = { onItemLongClick(bookReview) })) {
+        onLongClick = { onItemLongClick(bookReview) })
+  ) {
     Row(modifier = Modifier.fillMaxSize()) {
 
       Spacer(modifier = Modifier.width(16.dp))
 
-      Column(modifier = Modifier
-        .weight(0.6f)
-        .fillMaxHeight()) {
+      Column(
+        modifier = Modifier
+          .weight(0.6f)
+          .fillMaxHeight()
+      ) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = bookReview.book.name,
+        Text(
+          text = bookReview.book.name,
           color = MaterialTheme.colors.primary,
           fontSize = 18.sp,
-          fontWeight = FontWeight.Bold)
+          fontWeight = FontWeight.Bold
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Row {
-          Text(text = stringResource(id = R.string.rating_text),
+          Text(
+            text = stringResource(id = R.string.rating_text),
             color = MaterialTheme.colors.onPrimary
           )
 
@@ -122,7 +131,12 @@ fun BookReviewItem(
             onRatingChanged = {})
         }
 
-        Text(text = stringResource(id = R.string.number_of_reading_entries, bookReview.review.entries.size), color = MaterialTheme.colors.onPrimary)
+        Text(
+          text = stringResource(
+            id = R.string.number_of_reading_entries,
+            bookReview.review.entries.size
+          ), color = MaterialTheme.colors.onPrimary
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -141,17 +155,22 @@ fun BookReviewItem(
 
       Spacer(modifier = Modifier.width(16.dp))
 
-      Card(modifier = Modifier.weight(0.4f),
+      Card(
+        modifier = Modifier.weight(0.4f),
         shape = RoundedCornerShape(
           topEnd = 16.dp,
           topStart = 16.dp,
           bottomEnd = 16.dp,
-          bottomStart = 0.dp),
-        elevation = 16.dp) {
-        CoilImage(
-          data = bookReview.review.imageUrl,
+          bottomStart = 0.dp
+        ),
+        elevation = 16.dp
+      ) {
+        val painter = rememberImagePainter(data = bookReview.review.imageUrl)
+        Image(
+          painter = painter,
           contentScale = ContentScale.FillWidth,
-          contentDescription = null)
+          contentDescription = null
+        )
       }
     }
   }

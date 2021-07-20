@@ -40,6 +40,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,8 +49,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -63,10 +62,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
 import com.raywenderlich.android.librarian.R
 import com.raywenderlich.android.librarian.model.relations.BookReview
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.animation.BookReviewDetailsTransitionState
-import com.raywenderlich.android.librarian.ui.bookReviewDetails.animation.Initial
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.animation.animateBookReviewDetails
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.readingEntries.AddReadingEntryDialog
 import com.raywenderlich.android.librarian.ui.bookReviewDetails.readingEntries.ReadingEntries
@@ -74,11 +73,8 @@ import com.raywenderlich.android.librarian.ui.composeUi.DeleteDialog
 import com.raywenderlich.android.librarian.ui.composeUi.LibrarianTheme
 import com.raywenderlich.android.librarian.ui.composeUi.RatingBar
 import com.raywenderlich.android.librarian.ui.composeUi.TopBar
-import com.raywenderlich.android.librarian.utils.EMPTY_BOOK_REVIEW
-import com.raywenderlich.android.librarian.utils.EMPTY_GENRE
 import com.raywenderlich.android.librarian.utils.formatDateToText
 import dagger.hilt.android.AndroidEntryPoint
-import dev.chrisbanes.accompanist.coil.CoilImage
 
 @AndroidEntryPoint
 class BookReviewDetailsActivity : AppCompatActivity() {
@@ -115,7 +111,7 @@ class BookReviewDetailsActivity : AppCompatActivity() {
 
   @Composable
   fun BookReviewDetailsContent() {
-    val animationState by bookReviewDetailsViewModel.screenAnimationState.observeAsState(Initial)
+    val animationState = bookReviewDetailsViewModel.screenAnimationState
     val state = animateBookReviewDetails(screenState = animationState)
 
     LaunchedEffect(Unit, block = {
@@ -130,9 +126,8 @@ class BookReviewDetailsActivity : AppCompatActivity() {
 
   @Composable
   fun BookReviewDetailsTopBar() {
-    val reviewState by bookReviewDetailsViewModel.bookReviewDetailsState.observeAsState()
-    val bookName = reviewState?.book?.name
-      ?: stringResource(id = R.string.book_review_details_title)
+    val reviewState = bookReviewDetailsViewModel.bookReviewDetailsState
+    val bookName = reviewState.book.name
 
     TopBar(title = bookName, onBackPressed = { onBackPressed() })
   }
@@ -148,16 +143,15 @@ class BookReviewDetailsActivity : AppCompatActivity() {
 
   @Composable
   fun BookReviewDetailsInformation(state: BookReviewDetailsTransitionState) {
-    val bookReview by bookReviewDetailsViewModel.bookReviewDetailsState.observeAsState(EMPTY_BOOK_REVIEW)
-    val genre by bookReviewDetailsViewModel.genreState.observeAsState(EMPTY_GENRE)
-    val deleteEntryState by bookReviewDetailsViewModel.deleteEntryState.observeAsState()
-    val isShowingAddEntry by bookReviewDetailsViewModel.isShowingAddEntryState.observeAsState(false)
-
-    val entryToDelete = deleteEntryState
+    val bookReview = bookReviewDetailsViewModel.bookReviewDetailsState
+    val genre = bookReviewDetailsViewModel.genreState
+    val deleteEntryState = bookReviewDetailsViewModel.deleteEntryState
+    val isShowingAddEntry = bookReviewDetailsViewModel.isShowingAddEntryState
 
     Box(
       modifier = Modifier.fillMaxSize(),
-      contentAlignment = Alignment.Center) {
+      contentAlignment = Alignment.Center
+    ) {
 
       ReadingEntries(
         readingEntries = bookReview.review.entries,
@@ -177,8 +171,10 @@ class BookReviewDetailsActivity : AppCompatActivity() {
               shape = RoundedCornerShape(16.dp),
               elevation = 16.dp
             ) {
-              CoilImage(
-                data = bookReview.review.imageUrl,
+              val painter = rememberImagePainter(data = bookReview.review.imageUrl)
+
+              Image(
+                painter = painter,
                 contentScale = ContentScale.FillWidth,
                 contentDescription = null
               )
@@ -267,9 +263,9 @@ class BookReviewDetailsActivity : AppCompatActivity() {
         )
       }
 
-      if (entryToDelete != null) {
+      if (deleteEntryState != null) {
         DeleteDialog(
-          item = entryToDelete,
+          item = deleteEntryState,
           message = stringResource(id = R.string.delete_entry_message),
           onDeleteItem = { bookReviewDetailsViewModel.removeReadingEntry(it) },
           onDismiss = { bookReviewDetailsViewModel.onDialogDismiss() }

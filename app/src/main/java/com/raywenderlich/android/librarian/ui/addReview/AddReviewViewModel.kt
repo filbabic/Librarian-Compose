@@ -1,11 +1,16 @@
 package com.raywenderlich.android.librarian.ui.addReview
 
-import androidx.lifecycle.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.raywenderlich.android.librarian.model.Review
 import com.raywenderlich.android.librarian.model.relations.BookAndGenre
 import com.raywenderlich.android.librarian.model.state.AddBookReviewState
 import com.raywenderlich.android.librarian.repository.LibrarianRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -15,11 +20,10 @@ class AddReviewViewModel @Inject constructor(
   private val repository: LibrarianRepository
 ) : ViewModel() {
 
-  private val _bookReviewState = MutableLiveData(AddBookReviewState())
-  val bookReviewState: LiveData<AddBookReviewState> = _bookReviewState
+  var bookReviewState by mutableStateOf(AddBookReviewState())
+    private set
 
-  val booksState: LiveData<List<BookAndGenre>> =
-    repository.getBooksFlow().asLiveData(viewModelScope.coroutineContext)
+  val booksState: Flow<List<BookAndGenre>> = repository.getBooksFlow()
 
   private lateinit var addReviewView: AddReviewView
 
@@ -28,7 +32,7 @@ class AddReviewViewModel @Inject constructor(
   }
 
   fun addBookReview() {
-    val state = _bookReviewState.value ?: return
+    val state = bookReviewState
 
     viewModelScope.launch {
       val bookId = state.bookAndGenre.book.id
@@ -53,18 +57,18 @@ class AddReviewViewModel @Inject constructor(
   }
 
   fun onBookPicked(bookAndGenre: BookAndGenre) {
-    _bookReviewState.value = _bookReviewState.value?.copy(bookAndGenre = bookAndGenre)
+    bookReviewState = bookReviewState.copy(bookAndGenre = bookAndGenre)
   }
 
   fun onRatingSelected(rating: Int) {
-    _bookReviewState.value = _bookReviewState.value?.copy(rating = rating)
+    bookReviewState = bookReviewState.copy(rating = rating)
   }
 
   fun onImageUrlChanged(imageUrl: String) {
-    _bookReviewState.value = _bookReviewState.value?.copy(bookImageUrl = imageUrl)
+    bookReviewState = bookReviewState.copy(bookImageUrl = imageUrl)
   }
 
   fun onNotesChanged(notes: String) {
-    _bookReviewState.value = _bookReviewState.value?.copy(notes = notes)
+    bookReviewState = bookReviewState.copy(notes = notes)
   }
 }

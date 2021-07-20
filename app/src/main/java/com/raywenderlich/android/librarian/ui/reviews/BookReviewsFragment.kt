@@ -47,8 +47,8 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -126,14 +126,13 @@ class BookReviewsFragment : Fragment() {
   @ExperimentalFoundationApi
   @Composable
   fun BookReviewsContentWrapper() {
-    val bookReviews by bookReviewsViewModel.bookReviewsState.observeAsState(emptyList())
-    val deleteReviewState by bookReviewsViewModel.deleteReviewState.observeAsState()
-
-    val reviewToDelete = deleteReviewState
+    val bookReviews by bookReviewsViewModel.bookReviewsState.collectAsState(emptyList())
+    val deleteReviewState = bookReviewsViewModel.deleteReviewState
 
     Box(
       modifier = Modifier.fillMaxSize(),
-      contentAlignment = Alignment.Center) {
+      contentAlignment = Alignment.Center
+    ) {
 
       BookReviewsList(
         bookReviews,
@@ -141,10 +140,10 @@ class BookReviewsFragment : Fragment() {
         onItemLongClick = { bookReview -> bookReviewsViewModel.onItemLongTapped(bookReview) }
       )
 
-      if (reviewToDelete != null) {
+      if (deleteReviewState != null) {
         DeleteDialog(
-          item = reviewToDelete,
-          message = stringResource(id = R.string.delete_review_message, reviewToDelete.book.name),
+          item = deleteReviewState,
+          message = stringResource(id = R.string.delete_review_message, deleteReviewState.book.name),
           onDeleteItem = { bookReview -> bookReviewsViewModel.deleteReview(bookReview) },
           onDismiss = { bookReviewsViewModel.onDialogDismissed() }
         )

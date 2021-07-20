@@ -44,13 +44,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.raywenderlich.android.librarian.R
-import com.raywenderlich.android.librarian.model.state.AddBookState
 import com.raywenderlich.android.librarian.ui.composeUi.*
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -90,21 +87,26 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
 
   @Composable
   fun AddBookFormContent() {
-    val genres by addBookViewModel.genresState.observeAsState(emptyList())
-    val addBookState by addBookViewModel.addBookState.observeAsState(AddBookState())
+    val genres = addBookViewModel.genresState
+    val addBookState = addBookViewModel.addBookState
 
     Column(
       modifier = Modifier.fillMaxSize(),
-      horizontalAlignment = Alignment.CenterHorizontally) {
-      InputField(value = addBookState.name,
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      InputField(
+        value = addBookState.name,
         onStateChanged = { newValue -> addBookViewModel.onNameChanged(newValue) },
         label = stringResource(id = R.string.book_title_hint),
-        isInputValid = addBookState.name.isNotEmpty())
+        isInputValid = addBookState.name.isNotEmpty()
+      )
 
-      InputField(value = addBookState.description,
+      InputField(
+        value = addBookState.description,
         onStateChanged = { newValue -> addBookViewModel.onDescriptionChanged(newValue) },
         label = stringResource(id = R.string.book_description_hint),
-        isInputValid = addBookState.description.isNotEmpty())
+        isInputValid = addBookState.description.isNotEmpty()
+      )
 
       SpinnerPicker(
         pickerText = stringResource(id = R.string.genre_select),
@@ -117,7 +119,8 @@ class AddBookActivity : AppCompatActivity(), AddBookView {
         onClick = { addBookViewModel.onAddBookTapped() },
         isEnabled = addBookState.name.isNotEmpty()
           && addBookState.description.isNotEmpty()
-          && addBookState.genreId.isNotEmpty())
+          && addBookState.genreId.isNotEmpty()
+      )
     }
   }
 

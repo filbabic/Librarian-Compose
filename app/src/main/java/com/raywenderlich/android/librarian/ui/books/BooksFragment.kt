@@ -46,8 +46,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -102,6 +100,10 @@ class BooksFragment : Fragment() {
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
     booksViewModel.loadGenres()
+  }
+
+  override fun onStart() {
+    super.onStart()
     booksViewModel.loadBooks()
   }
 
@@ -138,7 +140,11 @@ class BooksFragment : Fragment() {
         }
       }
     }) {
-      Icon(Icons.Default.Edit, tint = MaterialTheme.colors.onSecondary, contentDescription = "Filter")
+      Icon(
+        Icons.Default.Edit,
+        tint = MaterialTheme.colors.onSecondary,
+        contentDescription = "Filter"
+      )
     }
   }
 
@@ -161,10 +167,8 @@ class BooksFragment : Fragment() {
   @ExperimentalMaterialApi
   @Composable
   fun BookFilterModalDrawer(bookFilterDrawerState: BottomDrawerState) {
-    val books by booksViewModel.booksState.observeAsState(emptyList())
-    val deleteDialogBook by booksViewModel.deleteBookState.observeAsState()
-
-    val bookToDelete = deleteDialogBook
+    val books = booksViewModel.booksState
+    val deleteDialogBook = booksViewModel.deleteBookState
 
     BottomDrawer(
       gesturesEnabled = false,
@@ -175,11 +179,12 @@ class BooksFragment : Fragment() {
       content = {
         Box(
           modifier = Modifier.fillMaxSize(),
-          contentAlignment = Center) {
+          contentAlignment = Center
+        ) {
 
-          if (bookToDelete != null) {
-            DeleteDialog(item = bookToDelete,
-              message = stringResource(id = R.string.delete_message, bookToDelete.book.name),
+          if (deleteDialogBook != null) {
+            DeleteDialog(item = deleteDialogBook,
+              message = stringResource(id = R.string.delete_message, deleteDialogBook.book.name),
               onDeleteItem = {
                 booksViewModel.removeBook(it.book)
                 booksViewModel.cancelDeleteBook()
@@ -199,7 +204,7 @@ class BooksFragment : Fragment() {
     bookFilterDrawerState: BottomDrawerState
   ) {
     val scope = rememberCoroutineScope()
-    val genres by booksViewModel.genresState.observeAsState(emptyList())
+    val genres = booksViewModel.genresState
     val filter = booksViewModel.filter
 
     BookFilter(modifier, filter, genres, onFilterSelected = { newFilter ->
